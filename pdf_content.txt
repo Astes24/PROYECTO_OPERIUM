@@ -1,0 +1,287 @@
+=== PAGE 1 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  1ENCARGO ÚNICO PARA DESARROLLO  ·  DOCUMENTO AUTÓNOMO
+OPERIUM
+Club de Entretenimiento
+Demo interactiva para una presentación privada con Conan y su equipo de marketing, 
+promotores, ventas y administración.
+Fecha: 12 de octubre de 2026   |   Reunión prevista: miércoles 14/10, sujeta a confirmación   |   Estado: PROPUESTA DE DEMO
+Resultado que necesitamos
+Una aplicación web navegable que pueda entenderse viendo y usando las pantallas, incluso si el presentador 
+habla poco. Debe mostrar cómo una persona descubre una noche, cómo un promotor capta interés, cómo 
+marketing prepara una acción y cómo la administración observa resultados de ejemplo para decidir. No basta 
+con un diseño estático.
+ENTREGAR NO PROMETER
+Experiencia público + panel de negocio + resumen de grupo, 
+con acciones conectadas.Más clientes, incremento de ventas, ROI o resultados 
+comerciales reales.
+Historias y números sintéticos, trazables, coherentes, con 
+rótulo DEMO.Integraciones, pasarelas, control de accesos o 
+comunicaciones reales.
+Una demo operable en móvil y desktop, con recorrido guiado  
+opcional.Sistema productivo, app publicada ni obligaciones del grupo 
+anfitrión.
+Contexto de presentación
+Alcance confirmado por el usuario: cuatro locales del mismo grupo, Señor Perú, Mood, Adriá y Play. Los 
+cuatro deben ser visibles y navegables en el Club y en el panel, cada uno con identidad, ficha, agenda y 
+métricas propias de DEMO. No inventar información comercial, eventos reales, logotipos ni material oficial; 
+pedir autorización antes de usar activos de marca.
+Conan participa como administrador y posible facilitador comercial, según lo informado. La inversión y 
+eventual participación societaria son conversaciones separadas, sin términos pactados.
+Según el usuario, el grupo ya tiene cobro con terminales/POS; se desconocen proveedor, capacidades e 
+integraciones. NO reemplazar ni simular una conexión real con caja/POS, facturación o control de acceso.
+El usuario confirma que el conjunto abarca los cuatro locales. Esto define el alcance de la DEMO, no acredita estructura societaria, 
+permisos sobre datos ni acceso a sus sistemas.
+Prioridad: recorrido P0 que funcione sin fallos. Todo lo adicional queda condicionado a tiempo disponible 
+y pruebas satisfactorias.
+01   Concepto y diferenciación
+Para el público: un club que reúne propuestas de entretenimiento, fechas y beneficios sin exigir una aplicación 
+instalada. Para los establecimientos: un espacio donde el equipo entiende señales verificables de interés, 
+asistencias identificadas y acciones comerciales, sin reemplazar ticketing ni el software existente.
+Hipótesis de producto: la información de relación con el público puede cubrir brechas entre marketing, 
+promotores y cada local. Aún debe validarse en su operación; el demo muestra la posibilidad, no prueba el 
+resultado.
+Actor Pregunta visible en pantalla Beneficio a demostrar
+Público ¿Qué puedo hacer este fin de semana?Descubrir, guardar, seguir local y ver 
+beneficio elegible.
+
+=== PAGE 2 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  2Actor Pregunta visible en pantalla Beneficio a demostrar
+Promotor ¿De dónde llega el interés?Enlace/código de origen ficticio y 
+registro de respuesta.
+Marketing ¿A quién conviene invitar?Segmento, exclusiones, mensaje y envío  
+simulado.
+Ventas / puerta ¿Llegó la persona? ¿Se registró venta?Validar asistencia de ejemplo; venta 
+solo con transacción enlazada.
+Encargado del local ¿Qué acción o evento debo revisar?Lectura basada en registros de su local 
+y alternativa concreta.
+Conan / grupo ¿Qué ocurre en las distintas marcas?Indicadores AGREGADOS; comparar sin  
+compartir clientes identificables.
+02   Historia principal: un fin de semana ficticio
+Usar el viernes 16 y sábado 17 de octubre de 2026 solo como calendario de muestra. Cada evento debe indicar: 
+“Evento ficticio para demostración”. La secuencia debe ser visible en un botón “Ver recorrido” y también permitir  
+navegación libre.
+Paso Pantalla / acción ejecutable Qué debe cambiar en los datos
+1. DescubrirMiembro abre “Este fin de semana”, ve 
+al menos un evento de cada uno de los 
+4 locales y guarda uno de Mood.Se agrega guardado al evento y al 
+perfil. No aumenta asistencia ni ventas.
+2. OrigenPromotor de Mood comparte una 
+fuente simulada; se pulsa “Simular 
+visita desde enlace”.Se crea señal con source_id/promo_id y 
+fecha. Atribución solo de esa señal.
+3. MarketingEquipo abre “Tu público”, ve segmento 
+con baja actividad y prepara invitación 
+de ejemplo.Se muestra quién es elegible, excluidos 
+y motivo; envío interno DEMO.
+4. OperaciónSe simula una noche y se confirma un 
+check-in ficticio; otro intento repetido 
+se bloquea.Asistencia validada aumenta una vez; 
+el interés previo no se convierte 
+automáticamente en visita.
+5. DecisiónMood abre “Hoy”: fuente, guardados, 
+identificados, recurrencia y respuesta 
+atribuida.Los totales se recalculan desde 
+eventos/simulaciones, nunca cifras 
+fijas.
+6. GrupoConan abre resumen agregado de los 4 
+locales (Señor Perú, Mood, Adriá y Play)  
+y su calendario.Los cuatro locales aparecen en la 
+comparativa con cifras reconciliadas, 
+sin fichas personales cruzadas.
+La historia conecta las áreas; no debe convertirse en un tour de 20 pantallas o menús técnicos.
+Cobertura obligatoria de locales: Mood protagoniza el recorrido; Play, Señor Perú y Adriá no son 
+decorativos. Cada uno tiene ficha, eventos, responsable/identidad visual simulados, señales de audiencia y 
+acceso desde el grupo. En la reunión debe poder seleccionarse cualquiera de los cuatro y mostrar al menos 
+una interacción útil.
+03   Pantallas obligatorias P0
+Pantalla Contenido y comportamiento mínimo
+A. Club / Descubrir (móvil)Hero visual “Este fin de semana” y tarjetas de Señor Perú, 
+Mood, Adriá y Play; filtros por local, próximas fechas y CTA 
+Ver evento / Guardar. Cada local debe poder abrirse desde el 
+inicio.
+B. Evento y Mi Club (móvil)Ficha con foto/arte original, detalle, Guardar, Seguir, pase 
+ilustrativo y beneficio ficticio con elegibilidad/condiciones. 
+No llamar al pase “entrada” ni prometer acceso.
+
+=== PAGE 3 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  3Pantalla Contenido y comportamiento mínimo
+C. Promotores (panel)Elegir promotor demo, ver enlace/código de origen, botón 
+“Simular interacción”, conteo de señales con fuente y 
+usuarios registrados; sin liquidar comisiones.
+D. Marketing (panel)Segmentos claros (nuevo, recurrente, sin interacción); una 
+campaña contextual con consentimientos, exclusiones y 
+envío simulado; respuesta visible en historial.
+E. Local: Hoy + Eventos (panel)Próximo evento, lectura de interés, actividad reciente, check-
+in ficticio sin duplicado, distinción entre 
+guardado/asistencia/venta, crear/editar evento demo.
+F. Grupo (panel)Comparativo agregado de los CUATRO: Señor Perú, Mood, 
+Adriá y Play; calendario y al menos un indicador derivado 
+por local; ningún dato personal entre marcas.
+G. Control de demostraciónSelector de persona/rol/local, “Simular fin de semana”, 
+“Reiniciar demo” y “Cómo funciona”; banner persistente 
+“DATOS FICTICIOS”.
+04   Reglas funcionales, datos y credibilidad
+Regla Obligación
+Separar hechosGuardado / clic / intención ≠P asistencia; asistencia ≠P venta. No 
+confundir “interesados” con “clientes adquiridos”.
+Venta solo con fuenteSi no se carga una transacción SIMULADA explícitamente 
+enlazada a miembro/visita, mostrar “Ventas no disponibles”. 
+Nunca inventar ingresos por inferencia.
+Audiencias / consentimientoConsentimiento por canal y local; el ejemplo debe excluir 
+registros sin autorización para una invitación. No activar 
+envíos reales.
+Promotores / fuenteUn source_id distinto para cada promotor; atribuir señal e 
+invitación según regla visible; no atribuir el mismo evento 
+dos veces.
+Check-inIdempotente: un miembro no suma dos asistencias al mismo 
+evento. Mostrar quién validó en la simulación.
+Grupo / privacidadSolo métricas agregadas y permisos por local. No ofrecer 
+acceso abierto a fichas del público entre marcas.
+RecomendaciónMostrar: señal  evidencia  acción sugerida  métrica a → → →
+observar  límite de interpretación. →
+VIP / puntosNO introducir jerarquías VIP, medallas o ranking por gasto 
+en P0. Considerarlo únicamente si aporta valor tras validar 
+datos y reglas con el operador.
+Datos DEMO mínimos sugeridos: 4 locales (sin omisiones), 8 eventos ficticios (al menos 2 por local), 80 miembros 
+ficticios, 2 promotores, 1 campaña preparada y 1 histórica, señales y check-ins por cada local. Los números son 
+cobertura ilustrativa, NO resultados esperados; nunca utilizar datos personales verdaderos.
+05   Diseño visual y experiencia
+Dirección visual: entretenimiento nocturno premium y editorial, no software administrativo genérico. Pantallas 
+expresivas para el público; paneles ejecutivos sobrios para los equipos. Debe ser profesional en móvil y escritorio.
+Elemento Especificación visual
+IdentidadOperium como marca de la demo; “Club de Entretenimiento”  
+como experiencia. Sin crear ni aprobar nueva marca 
+comercial.
+
+=== PAGE 4 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  4Elemento Especificación visual
+PaletaBase negro/carbón cálido; texto marfil; acento ámbar/dorado  
+discreto. Las cuatro identidades se distinguen mediante 
+fichas y acentos propios, sin crear cuatro interfaces 
+diferentes.
+Fotografía / arteEscena realista de cultura nocturna con licencia o recursos 
+originales. Evitar artistas reales, logos ajenos, imágenes de 
+baja calidad, neón excesivo y rostros inventados como 
+público real.
+TipografíaTitular claro y expresivo; texto UI grande y legible. Jerarquía 
+fuerte, sin microtexto, sin cifras flotantes sobre rostros.
+Arquitectura UXClub: Descubrir / Mis planes / Mi Club / Perfil. Portal: Hoy / 
+Eventos / Tu público; Promotores accesible por función; 
+Grupo en vista autorizada.
+AutoexplicativoLa primera pantalla de cada rol debe responder “qué está 
+pasando / qué puedo hacer”. Incluir microcopys breves y una  
+acción principal por pantalla.
+ResponsiveClub mobile-first; panel desktop-first pero funcional en 360 / 
+390 / 768 / 1024 / 1440 px. Sin desplazamientos horizontales 
+innecesarios.
+06   Priorización y límites de desarrollo
+Prioridad Construir Condición de salida
+P0 — INNEGOCIABLEPantallas A–G; los CUATRO locales 
+navegables, con eventos y métricas 
+propias; acciones conectadas; dataset 
+único; simulación reproducible; vista 
+grupo, sistema visual y reset.Flujo completo funciona de punta a 
+punta en vivo y en respaldo local.
+P1 — SI SOBRA TIEMPOComparador simple de calendario entre  
+marcas; ejemplo de costo de evento con  
+inputs y “no calculable” cuando falte 
+coste; ingreso sintético enlazado.No retrasa ni desestabiliza P0 y está 
+identificado como supuesto.
+POSTERIOR / NO HACERApp iOS/Android, venta real de 
+entradas, POS, pagos, facturación, 
+hardware de puerta, biometría, 
+automatización de WhatsApp, IA 
+predictiva, medallas, marketplace 
+externo.Solo evaluar luego de revisar sistemas, 
+datos, necesidad y autorización.
+El equipo decide lenguaje, frameworks, hosting y librerías. Este encargo define comportamiento y criterios  
+de entrega, no arquitectura o stack obligatorio. Si la fecha hace inviable P0, deben reportar recorte 
+propuesto antes de construir extras.
+07   Pruebas y entrega exigida
+Caso Aceptación comprobable
+Ruta completaUsuario ve los cuatro locales y guarda un evento de Mood  →
+fuente de promotor  invitación simulada  check-in  → → →
+Mood y grupo actualizan cifras; los demás locales conservan 
+sus datos.
+Acciones reales dentro de demoCada botón del recorrido responde y persiste en la sesión; sin  
+enlaces vacíos, botones decorativos ni pantallas muertas.
+
+=== PAGE 5 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  5Caso Aceptación comprobable
+Datos conciliadosConteos de eventos/miembros/check-ins/beneficios salen del 
+mismo estado; cada local presenta 2 eventos ficticios, su ≥
+propio panel y estadísticas coherentes; reset reproduce la 
+semilla.
+ControlesSegundo check-in no incrementa total; invitar sin 
+consentimiento se bloquea; una marca no ve datos 
+personales de otra.
+VeracidadBanner visible DEMO. No hay ventas, beneficios reales, 
+reservas reales ni mensajes efectivamente enviados.
+Cobertura de cuatro localesSeñor Perú, Mood, Adriá y Play aparecen en Club, ficha, 
+agenda y panel/grupo. Seleccionar cualquiera muestra datos 
+propios; un cambio de Mood no altera automáticamente los 
+otros tres.
+VisualNavegación estable y legible en teléfono 360/390 y escritorio 
+1440; sin recortes, scroll horizontal o fallos de contraste.
+Explicación autónomaDos personas que no conocen el proyecto recorren el demo 
+sin guía; anotar dónde se trabaron y corregir lo crítico.
+ContingenciaURL activa y copia operable local; recorrido alternativo que 
+abra Play, Señor Perú y Adriá además de Mood; capturas de 
+respaldo si es viable y reset probado.
+Qué debe entregar el equipo
+URL o archivo ejecutable demostrable, instrucciones de apertura, copia offline y modo Reset.
+Mapa de pantallas y recorrido P0 con tiempos estimados; limitaciones pendientes visibles.
+Evidencia fechada de pruebas y lista concreta de defectos conocidos, sin afirmar “probado” si no se ejecutó.
+Viabilidad real antes de la presentación y estimación independiente para convertir el prototipo en piloto (no 
+implementarlo todavía).
+08   Reunión de 60 minutos: cómo se muestra
+Minutos Contenido Señal de valor
+00–04Contexto: “vamos a recrear un fin de 
+semana en sus cuatro locales”.Se entiende el problema sin discurso 
+técnico.
+04–24Demo en vivo: club con 4 locales  →
+promotor  marketing  Mood  vista → → →
+de grupo con 4 locales  reset. →Cada departamento reconoce una 
+acción propia.
+24–34Abrir Play, Señor Perú o Adriá a 
+elección del equipo y repetir un caso 
+breve, sin romper el estado.Comprobar comprensión, no enumerar  
+funciones.
+34–49Contrastar con cómo operan hoy: 
+sistema de puerta, fuentes, captación, 
+campañas y responsables.Detectar brechas sin inventarlas.
+49–56Proponer explorar piloto de UNA 
+marca, con una fuente de datos y 
+responsable interno.Acotar riesgo y esfuerzo.
+56–60Acordar responsables, acceso 
+autorizado a proceso/datos y fecha de 
+siguiente decisión.Compromiso verificable, no promesa de  
+inversión.
+Frases para acompañar la demo
+APERTURA: “No venimos a reemplazar su facturación ni su control de entradas. Queremos mostrar cómo podrían  
+conectar público, promotores y marketing con decisiones útiles para sus locales”.
+
+=== PAGE 6 ===
+OPERIUM   /   CLUB DE ENTRETENIMIENTO                                      12 OCT 2026
+USO INTERNO  •  DEMO CON DATOS FICTICIOS  |  6CUANDO CAMBIAN LOS DATOS: “Aquí no estamos diciendo que un guardado sea una venta. Primero vemos 
+interés; después, asistencia validada. Una venta solo se mostrará cuando podamos enlazarla a una fuente 
+confiable”.
+CIERRE: “¿Qué parte de esta experiencia ya resuelve su sistema, qué parte les falta y cuál valdría la pena 
+comprobar en un piloto pequeño?”.
+09   Estado y referencias
+Estado: propuesta funcional para demo; no implementación ni piloto aprobado. La simulación no acredita 
+demanda, incremento de venta ni adopción del equipo. La reunión no implica inversión aprobada.
+Referencias externas para entender capacidades existentes (no copiar automáticamente): Passline (ticketing), Joinnus (reporte de venta),  
+Resident Advisor Pro (relación con audiencia) y Shotgun Pro (comunidad/eventos). Verificar condiciones locales y contratos si alguna 
+integración se propone en el futuro.
+https://www.passline.com   |   https://blog.joinnus.com/joinnus-para-organizadores-como-conocer-tu-reporte-de-ventas/
+https://pro.ra.co/crm   |   https://pro.shotgun.live/en-eu/solution/collective
+En Perú, cualquier piloto real requiere revisar tratamiento de datos personales, consentimientos y comunicaciones; en esta demo todos 
+los perfiles son ficticios. Reglamento: DS 016-2024-JUS.
+https://www.gob.pe/institucion/anpd/normas-legales/6554453-16-2024-jus
+
