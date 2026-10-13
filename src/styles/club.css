@@ -32,10 +32,11 @@
   filter: brightness(0.65) contrast(1.1);
   transform: scale(1.02);
   transition: transform 6s ease-out;
+  pointer-events: none;
 }
 
 .club-hero:hover .club-hero__bg {
-  transform: scale(1.06);
+  transform: scale(1.04);
 }
 
 .club-hero__overlay {

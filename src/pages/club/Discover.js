@@ -142,11 +142,19 @@ export default function Discover() {
       <div class="discover-page animate-fade-in">
         <!-- Hero Section -->
         <section class="club-hero">
-          <img 
-            src="/images/hero_principal.png" 
-            alt="Operium Noche" 
+          <video 
             class="club-hero__bg" 
-          />
+            autoplay 
+            muted 
+            loop 
+            playsinline 
+            webkit-playsinline 
+            preload="auto" 
+            poster="/images/hero_principal.png"
+            id="club-hero-ambient-video"
+          >
+            <source src="/videos/hero_ambient_slow.mp4" type="video/mp4" />
+          </video>
           <div class="club-hero__overlay"></div>
 
           <div class="club-hero__content">
@@ -370,6 +378,14 @@ export default function Discover() {
 
     // Inicializar listeners de tarjetas
     attachCardListeners();
+
+    // Asegurar reproducción fluida del video de fondo ambiental
+    const ambientVid = document.getElementById('club-hero-ambient-video');
+    if (ambientVid) {
+      ambientVid.play().catch(() => {
+        // Si el navegador bloquea autoplay sin interacción, el poster estático actúa como respaldo elegante
+      });
+    }
 
     // Suscripción al store reactivo
     const unsubscribe = subscribe(() => {
