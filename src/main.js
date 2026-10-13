@@ -52,6 +52,7 @@ alias('/panel/venue', '/panel/resumen');
 alias('/panel/group', '/panel/resumen');
 alias('/panel/promoters', '/panel/origen');
 alias('/panel/marketing', '/panel/publico');
+alias('/panel/events', '/panel/eventos');
 
 // Recorrido guiado. En pantalla solo la acción a realizar; la frase para el
 // cliente queda plegada como guion del presentador. Los pasos con `module`

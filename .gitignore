@@ -3,6 +3,7 @@ dist
 .vercel
 .netlify
 *.log
+Video_by_*.mp4
 
 # Agentes y skills
 .agents/

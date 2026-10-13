@@ -25,13 +25,18 @@ export function eventStatus(event) {
   const days = Math.round((new Date(event.date) - new Date(DEMO_TODAY)) / 86400000);
   if (days <= 0) return { key: 'live', label: 'Esta noche' };
   if (days === 1) return { key: 'upcoming', label: `Mañana · ${event.time}` };
-  return { key: 'upcoming', label: `${event.dayLabel.split(' ')[0]} · ${event.time}` };
+  // Este fin de semana basta el día; más adelante hace falta la fecha completa
+  if (days <= 2) return { key: 'upcoming', label: `${event.dayLabel.split(' ')[0]} · ${event.time}` };
+  return { key: 'upcoming', label: `${event.dayLabel} · ${event.time}` };
 }
 
 // — Este fin de semana (16–17 oct), con los datos vivos del store —
+const CURRENT_DATES = ['2026-10-16', '2026-10-17'];
+
 export function currentWeekend(ctx) {
   const ids = ctxVenues(ctx).map(v => v.id);
-  const events = getState().events.filter(e => ids.includes(e.venueId));
+  // Solo las noches de este fin de semana; las fechas creadas más adelante van aparte
+  const events = getState().events.filter(e => ids.includes(e.venueId) && CURRENT_DATES.includes(e.date));
   const finished = events.filter(e => e.finished);
   const sum = (list, key) => list.reduce((acc, e) => acc + (e[key] || 0), 0);
   return {
@@ -46,6 +51,14 @@ export function currentWeekend(ctx) {
     conversion: pct(sum(finished, 'savedAttended'), sum(finished, 'savedCount')),
     occupancy: pct(sum(finished, 'checkinCount'), sum(finished, 'capacity')),
   };
+}
+
+// — Fechas programadas después de este fin de semana —
+export function laterEvents(ctx) {
+  const ids = ctxVenues(ctx).map(v => v.id);
+  return getState().events
+    .filter(e => ids.includes(e.venueId) && e.date > CURRENT_DATES[1])
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 
 // — Historial agregado por fin de semana —

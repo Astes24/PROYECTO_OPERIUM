@@ -2358,7 +2358,6 @@ body.mode-panel * { scrollbar-color: #C3C9D1 var(--color-bg); }
   .nb-event { grid-template-columns: 1fr auto; gap: var(--space-sm) var(--space-md); padding: var(--space-md); }
   .nb-event__bar { grid-column: 1 / -1; grid-row: 2; }
   .nb-event__stats { grid-column: 1 / -1; grid-row: 3; }
-  .nb-event__public { grid-column: 2; grid-row: 1; align-self: start; }
 
   .nb-sources { padding: var(--space-md); }
   .nb-sources__row { grid-template-columns: 1fr; gap: 6px; }
@@ -2390,4 +2389,68 @@ body.mode-panel .door-app .form-select option { background: #1A1815; color: #FAF
 .nb-promoters > *, .pr-card__head > div, .pr-link--compact { min-width: 0; }
 @media (max-width: 860px) {
   .nb-kpi:last-child:nth-child(odd) { grid-column: 1 / -1; border-left: none; border-top: 1px solid var(--color-border-subtle); }
+}
+
+/* ==========================================================================
+   25. EVENTOS: gestión de fechas y recomendación (aporte de Erick, rediseñado)
+   ========================================================================== */
+.nb-header__action { gap: 8px; align-self: flex-start; }
+
+.nb-event__actions { display: flex; align-items: center; gap: 2px; }
+.nb-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+}
+.nb-icon-btn:hover { color: var(--color-text); background: var(--color-surface-hover); }
+.nb-icon-btn--danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+
+.nb-rec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  border-color: var(--color-border-accent);
+  background: linear-gradient(0deg, var(--color-accent-subtle), var(--color-accent-subtle)), var(--color-surface);
+}
+.nb-rec__body { flex: 1 1 520px; min-width: 0; }
+.nb-rec__body .section-title__eyebrow { display: inline-flex; align-items: center; gap: 6px; }
+.nb-rec__body .vt-panel__title { margin: 4px 0 6px; }
+.nb-rec__reason { margin: 0 0 var(--space-md); font-size: var(--font-size-sm); color: var(--color-text-muted); max-width: 70ch; }
+.nb-rec__facts { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-xl); margin: 0; }
+.nb-rec__facts dt { font-size: 0.75rem; color: var(--color-text-dim); }
+.nb-rec__facts dd { margin: 2px 0 0; font-size: var(--font-size-sm); font-weight: 600; }
+.nb-rec .btn { gap: 8px; }
+
+/* Ventana modal del formulario de evento */
+.modal-backdrop { background-color: rgba(16, 24, 40, 0.45); }
+.nb-modal {
+  width: min(600px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.25);
+  animation: fadeIn 0.2s ease;
+}
+.nb-modal__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); }
+.nb-modal__foot { display: flex; justify-content: flex-end; gap: var(--space-sm); padding-top: var(--space-md); border-top: 1px solid var(--color-border-subtle); }
+.nb-form .form-group { margin-bottom: var(--space-sm); }
+.nb-form__row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: var(--space-sm); }
+@media (max-width: 560px) { .nb-form__row { grid-template-columns: 1fr 1fr; } }
+
+@media (min-width: 861px) {
+  .nb-event { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 200px auto; }
+}
+@media (max-width: 860px) {
+  .nb-event__actions { grid-column: 2; grid-row: 1; align-self: start; }
 }
