@@ -1,4 +1,3 @@
-// Automated Verification Script for Operium Demo
 import { 
   getState, 
   resetDemo, 
@@ -8,7 +7,10 @@ import {
   sendCampaign, 
   checkIn, 
   getVenueMetrics, 
-  getGroupMetrics 
+  getGroupMetrics,
+  createEvent,
+  updateEvent,
+  deleteEvent
 } from './src/store.js';
 import { VENUES } from './src/data/venues.js';
 import { EVENTS } from './src/data/events.js';
@@ -111,7 +113,26 @@ assert(groupMetrics.length === 4, 'Step 6: Group summary aggregates exactly 4 ve
 const totalGroupCheckins = groupMetrics.reduce((sum, g) => sum + g.metrics.totalCheckins, 0);
 assert(totalGroupCheckins === postCheckinMood.totalCheckins, 'Step 6: Group checkins equals sum of venue checkins');
 
-// 7. RESET INTEGRITY
+// 7. EVENT MANAGEMENT ACTIONS (P4)
+const initialEventCount = getState().events.length;
+const newEvent = createEvent({
+  venueId: 'mood',
+  title: 'Evento Test Automatizado',
+  subtitle: 'Subtítulo test',
+  date: '2026-10-24',
+  capacity: 180,
+});
+assert(newEvent && newEvent.id, 'P4 Event Management: createEvent creates a valid event');
+assert(getState().events.length === initialEventCount + 1, 'P4 Event Management: events count incremented by 1');
+
+const updatedEvent = updateEvent(newEvent.id, { title: 'Título Modificado' });
+assert(updatedEvent && updatedEvent.title === 'Título Modificado', 'P4 Event Management: updateEvent modifies event title');
+
+const deleteResult = deleteEvent(newEvent.id);
+assert(deleteResult === true, 'P4 Event Management: deleteEvent returns true');
+assert(getState().events.length === initialEventCount, 'P4 Event Management: events count restored after deletion');
+
+// 8. RESET INTEGRITY
 resetDemo();
 const resetState = getState();
 assert(resetState.campaigns.find(c => c.id === 'camp-01').status === 'draft', 'Reset: Campaign reverted to draft');

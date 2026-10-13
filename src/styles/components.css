@@ -1210,3 +1210,40 @@
   margin-left: auto;
 }
 
+/* ==========================================================================
+   19. MODAL DIALOGS & EVENT ADMIN
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-md);
+}
+
+.btn--danger-outline {
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid rgba(226, 75, 75, 0.4);
+}
+
+.btn--danger-outline:hover {
+  background: rgba(226, 75, 75, 0.15);
+  border-color: var(--color-error);
+}
+
+.card--event-manage {
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card--event-manage:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+

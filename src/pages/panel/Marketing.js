@@ -5,9 +5,11 @@ import { getState, subscribe, sendCampaign } from '../../store.js';
 import { getVenue, VENUES } from '../../data/venues.js';
 
 export default function Marketing() {
+  let selectedCampaignId = null;
+
   function render() {
     const state = getState();
-    const { members, campaigns } = state;
+    const { members, campaigns, currentVenueId } = state;
 
     // Segmentos calculados dinámicamente desde el store
     const nuevoMembers = members.filter(m => m.segment === 'nuevo');
@@ -23,12 +25,16 @@ export default function Marketing() {
     const recurrentePct = Math.round((recurrenteCount / totalMembers) * 100);
     const sinInteraccionPct = Math.round((sinInteraccionCount / totalMembers) * 100);
 
-    // Campañas
-    const draftCampaign = campaigns.find(c => c.id === 'camp-01') || campaigns[0];
-    const completedCampaign = campaigns.find(c => c.id === 'camp-02') || campaigns[1];
+    // Campañas — selección dinámica por local o campaña activa
+    if (!selectedCampaignId || !campaigns.some(c => c.id === selectedCampaignId)) {
+      const matchVenue = campaigns.find(c => c.venueId === currentVenueId);
+      selectedCampaignId = matchVenue ? matchVenue.id : campaigns[0]?.id;
+    }
+    const draftCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
+    const completedCampaign = campaigns.find(c => c.status === 'completed' && c.id !== selectedCampaignId) || campaigns.find(c => c.id === 'camp-02') || campaigns[1];
 
-    // Cálculos dinámicos de elegibilidad para camp-01 (o la de borrador/activa)
-    const venueDraft = getVenue(draftCampaign.venueId) || { name: 'Mood', accentColor: '#9B59B6' };
+    // Cálculos dinámicos de elegibilidad para la campaña seleccionada
+    const venueDraft = getVenue(draftCampaign.venueId) || { name: draftCampaign.venueId, accentColor: '#9B59B6' };
     
     // Miembros que cumplen el segmento de la campaña
     const segmentTargetMembers = members.filter(m => m.segment === draftCampaign.segment);
@@ -210,10 +216,23 @@ export default function Marketing() {
 
         <!-- SECCIÓN 2: Campañas Contextuales y Consentimiento -->
         <section class="marketing-section">
-          <div class="section-header-row">
+          <div class="section-header-row" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: var(--space-sm);">
             <div>
               <h2 class="section-title">Campañas Contextuales</h2>
               <p class="section-subtitle">Filtrado estricto por consentimiento explícito de canal y local antes de cualquier envío.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+              <label for="select-audit-campaign" class="form-label" style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-muted);">Auditar campaña:</label>
+              <select id="select-audit-campaign" class="form-select form-select--sm" style="min-width: 260px;">
+                ${campaigns.map(c => {
+                  const cv = getVenue(c.venueId) || { name: c.venueId };
+                  return `
+                    <option value="${c.id}" ${c.id === selectedCampaignId ? 'selected' : ''}>
+                      ${cv.name} • ${c.name} (${c.status === 'sent' ? 'Enviada' : c.status === 'completed' ? 'Completada' : 'Borrador'})
+                    </option>
+                  `;
+                }).join('')}
+              </select>
             </div>
           </div>
 
@@ -268,8 +287,8 @@ export default function Marketing() {
                   </div>
                   <div class="message-preview">
                     <div class="message-preview__header">
-                      <span><strong>De:</strong> club@operium.club (Mood)</span>
-                      <span><strong>Asunto:</strong> Invitación especial — Mood Sessions</span>
+                      <span><strong>De:</strong> club@operium.club (${venueDraft.name})</span>
+                      <span><strong>Asunto:</strong> ${draftCampaign.name}</span>
                     </div>
                     <div class="message-preview__body">
                       "${draftCampaign.message}"
@@ -332,8 +351,8 @@ export default function Marketing() {
                     <span class="excluded-samples-title">Muestra de miembros protegidos por exclusión:</span>
                     <div class="excluded-tags-cloud">
                       ${excludedTotal.slice(0, 6).map(m => `
-                        <span class="excluded-member-tag" title="Motivo: ${!m.consent.email ? 'Sin email' : 'Sin permiso para Mood'}">
-                          ${m.name} <small>(${!m.consent.email ? 'No email' : 'No Mood'})</small>
+                        <span class="excluded-member-tag" title="Motivo: ${!m.consent.email ? 'Sin email' : 'Sin permiso para ' + venueDraft.name}">
+                          ${m.name} <small>(${!m.consent.email ? 'No email' : 'No ' + venueDraft.name})</small>
                         </span>
                       `).join('')}
                       ${excludedTotal.length > 6 ? `<span class="excluded-member-tag excluded-member-tag--more">+${excludedTotal.length - 6} más</span>` : ''}
@@ -500,9 +519,18 @@ export default function Marketing() {
       if (sendBtn) {
         sendBtn.addEventListener('click', () => {
           const campaignId = sendBtn.dataset.campaignId || 'camp-01';
-          const success = sendCampaign(campaignId);
-          if (success) {
-            // El store notificará a los suscriptores y re-renderizará
+          sendCampaign(campaignId);
+        });
+      }
+
+      const campaignSelect = document.getElementById('select-audit-campaign');
+      if (campaignSelect) {
+        campaignSelect.addEventListener('change', (e) => {
+          selectedCampaignId = e.target.value;
+          const pageEl = document.querySelector('.marketing-page');
+          if (pageEl && pageEl.parentElement) {
+            pageEl.parentElement.innerHTML = render();
+            setupInteractions();
           }
         });
       }

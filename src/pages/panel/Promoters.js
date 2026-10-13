@@ -35,7 +35,7 @@ export default function Promoters() {
             </div>
             <div class="stat-pill">
               <span class="stat-pill__label">Usuarios atribuidos</span>
-              <span class="stat-pill__value">${promoters.reduce((acc, p) => acc + (p.registeredUsers || 0), 0)}</span>
+              <span class="stat-pill__value">${promoters.reduce((acc, p) => acc + new Set((p.signals || []).map(s => s.memberId)).size, 0)}</span>
             </div>
           </div>
         </header>
@@ -100,7 +100,7 @@ export default function Promoters() {
                     <div class="metric-card">
                       <span class="metric-card__label">Usuarios registrados</span>
                       <span class="metric-card__value">
-                        ${promoter.registeredUsers}
+                        ${new Set((promoter.signals || []).map(s => s.memberId)).size}
                       </span>
                       <span class="metric-card__sub">Miembros vinculados</span>
                     </div>

@@ -1,5 +1,6 @@
 // Operium Club — Centralized Store
 // Estado reactivo en memoria con deep clone para reset
+// Persistencia en sessionStorage para sobrevivir recargas de página
 
 import { EVENTS } from './data/events.js';
 import { MEMBERS } from './data/members.js';
@@ -23,15 +24,50 @@ const SEED = {
   currentMemberId: 'member-001',
   currentRole: 'publico', // publico | promotor | marketing | ventas | encargado | grupo
   currentVenueId: 'mood',
-  // Notifications / toast
+  // Notifications / toast (transient, not persisted)
   notifications: [],
   // Tour state
   tourStep: -1, // -1 = not active
   tourCompleted: false,
 };
 
-// The live state
-let state = deepClone(SEED);
+// ========================
+// SESSION STORAGE PERSISTENCE
+// ========================
+const STORAGE_KEY = 'operium_demo_state';
+
+function saveToSession() {
+  try {
+    // Excluir notifications (transitorias) de la persistencia
+    const { notifications, ...persistable } = state;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
+  } catch (_) {
+    // Silenciar errores de almacenamiento (quota, private mode, etc.)
+  }
+}
+
+function loadFromSession() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    // Restaurar notifications como array vacío (transitorio)
+    saved.notifications = [];
+    return saved;
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearSession() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch (_) { /* noop */ }
+}
+
+// The live state — restore from sessionStorage if available
+const restored = loadFromSession();
+let state = restored || deepClone(SEED);
 const listeners = new Set();
 
 // ========================
@@ -48,6 +84,7 @@ export function subscribe(fn) {
 }
 
 function notify() {
+  saveToSession();
   listeners.forEach(fn => fn(state));
 }
 
@@ -57,6 +94,7 @@ function notify() {
 
 // — Demo control —
 export function resetDemo() {
+  clearSession();
   state = deepClone(SEED);
   notify();
 }
@@ -114,6 +152,67 @@ export function followVenue(memberId, venueId) {
 
   member.following.push(venueId);
   addNotification(`${member.firstName} sigue a ${state.venues.find(v => v.id === venueId)?.name}`);
+  notify();
+  return true;
+}
+
+// — Event management actions —
+export function createEvent(eventData) {
+  const venue = state.venues.find(v => v.id === eventData.venueId);
+  const id = eventData.id || `ev-${eventData.venueId}-${Date.now().toString(36)}`;
+  const newEvent = {
+    id,
+    venueId: eventData.venueId,
+    title: eventData.title || 'Nuevo Evento Operium',
+    subtitle: eventData.subtitle || 'Experiencia exclusiva del club',
+    description: eventData.description || 'Evento programado para los miembros del club.',
+    date: eventData.date || '2026-10-17',
+    dayLabel: eventData.dayLabel || 'Sábado 17 Oct',
+    time: eventData.time || '21:00',
+    endTime: eventData.endTime || '03:30',
+    image: eventData.image || (venue?.id === 'senor-peru' ? '/images/real_senor_peru_flyer.jpg' : venue?.id === 'mood' ? '/images/real_mood_dj.jpg' : venue?.id === 'adria' ? '/images/real_adria_amigos.jpg' : '/images/real_play_dj.jpg'),
+    video: eventData.video || null,
+    capacity: parseInt(eventData.capacity, 10) || 200,
+    savedCount: 0,
+    checkinCount: 0,
+    tags: Array.isArray(eventData.tags) ? eventData.tags : (eventData.tags ? eventData.tags.split(',').map(t => t.trim()) : ['Club Demo']),
+    fictitious: true,
+    benefit: eventData.benefit || {
+      title: 'Beneficio de cortesía',
+      description: 'Acceso preferencial para miembros del club.',
+      eligibility: 'Miembros con perfil activo',
+      conditions: 'Sujeto a aforo disponible. Presentar pase.',
+    },
+  };
+
+  state.events.push(newEvent);
+  addNotification(`Evento "${newEvent.title}" creado en ${venue?.name || 'el local'} (DEMO)`);
+  notify();
+  return newEvent;
+}
+
+export function updateEvent(eventId, fields) {
+  const event = state.events.find(e => e.id === eventId);
+  if (!event) return null;
+
+  Object.assign(event, fields);
+  if (fields.capacity) event.capacity = parseInt(fields.capacity, 10);
+  if (typeof fields.tags === 'string') {
+    event.tags = fields.tags.split(',').map(t => t.trim());
+  }
+
+  addNotification(`Evento "${event.title}" actualizado (DEMO)`);
+  notify();
+  return event;
+}
+
+export function deleteEvent(eventId) {
+  const idx = state.events.findIndex(e => e.id === eventId);
+  if (idx === -1) return false;
+
+  const title = state.events[idx].title;
+  state.events.splice(idx, 1);
+  addNotification(`Evento "${title}" eliminado de la agenda`);
   notify();
   return true;
 }

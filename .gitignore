@@ -3,4 +3,5 @@ dist
 .vercel
 .netlify
 *.log
+Video_by_*.mp4
 

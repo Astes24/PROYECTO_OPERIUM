@@ -19,6 +19,7 @@ import MyClub from './pages/club/MyClub.js';
 import Promoters from './pages/panel/Promoters.js';
 import Marketing from './pages/panel/Marketing.js';
 import VenueToday from './pages/panel/VenueToday.js';
+import Events from './pages/panel/Events.js';
 import Group from './pages/panel/Group.js';
 import DemoControl from './pages/demo/DemoControl.js';
 
@@ -34,9 +35,10 @@ import './styles/animations.css';
 route('/discover', Discover);
 route('/event/:id', (params) => EventDetail(params));
 route('/myclub', MyClub);
+route('/panel/venue', VenueToday);
+route('/panel/events', Events);
 route('/panel/promoters', Promoters);
 route('/panel/marketing', Marketing);
-route('/panel/venue', VenueToday);
 route('/panel/group', Group);
 route('/demo', DemoControl);
 
@@ -151,6 +153,10 @@ function buildAppShell() {
         <a href="#/panel/venue" class="panel-sidebar__item" data-route="/panel/venue">
           <span class="panel-sidebar__icon">📍</span>
           <span>Local: Hoy</span>
+        </a>
+        <a href="#/panel/events" class="panel-sidebar__item" data-route="/panel/events">
+          <span class="panel-sidebar__icon">📅</span>
+          <span>Eventos</span>
         </a>
         <a href="#/panel/promoters" class="panel-sidebar__item" data-route="/panel/promoters">
           <span class="panel-sidebar__icon">📣</span>

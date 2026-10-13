@@ -421,7 +421,7 @@ export default function VenueToday() {
                             <span class="badge-label">señales</span>
                           </div>
                           <div class="promoter-stat-badge">
-                            <span class="badge-num">${p.registeredUsers}</span>
+                            <span class="badge-num">${new Set((p.signals || []).map(s => s.memberId)).size}</span>
                             <span class="badge-label">registrados</span>
                           </div>
                         </div>
