@@ -131,6 +131,41 @@ export default function EventDetail(params = {}) {
               <p class="event-detail__description">${event.description}</p>
             </div>
 
+            <!-- Video Teaser del Establecimiento si existe -->
+            ${event.video ? `
+              <div style="margin-bottom: var(--space-xl);">
+                <h3 class="event-detail__section-title" style="display: flex; align-items: center; gap: 8px;">
+                  <span>🎬</span> <span>Video Teaser del Establecimiento</span>
+                </h3>
+                <div style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-border); background: #000; box-shadow: var(--shadow-md);">
+                  <video 
+                    src="${event.video}" 
+                    controls 
+                    playsinline
+                    poster="${event.image}"
+                    style="width: 100%; max-height: 440px; object-fit: contain; display: block; background: #000;"
+                  ></video>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Enlace al Reel en Instagram si existe -->
+            ${event.reelUrl ? `
+              <div style="margin-bottom: var(--space-lg);">
+                <a 
+                  href="${event.reelUrl}" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="btn btn--outline btn--sm" 
+                  style="border-color: #E1306C; color: #FAF3E8; display: inline-flex; align-items: center; gap: 8px;"
+                >
+                  <span style="font-size: 1.1rem;">📸</span>
+                  <span>Ver reel oficial en Instagram (${venue.instagram || '@' + venue.id})</span>
+                  <span>↗</span>
+                </a>
+              </div>
+            ` : ''}
+
             <!-- Tarjeta de Beneficio Exclusivo del Club -->
             ${event.benefit ? `
               <div class="benefit-card">
@@ -168,6 +203,7 @@ export default function EventDetail(params = {}) {
               </p>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-sm); font-size: var(--font-size-xs); color: var(--color-text-dim);">
                 <div>📍 <strong>Ubicación:</strong> ${venue.address}</div>
+                ${venue.instagram ? `<div>📸 <strong>Instagram:</strong> <a href="https://instagram.com/${venue.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" style="color: var(--color-accent); font-weight: 600;">${venue.instagram} ↗</a></div>` : ''}
                 <div>🕒 <strong>Horario:</strong> ${venue.schedule}</div>
                 <div>👤 <strong>Responsable:</strong> ${venue.manager}</div>
                 <div>👥 <strong>Aforo local:</strong> ${venue.capacity} personas</div>
