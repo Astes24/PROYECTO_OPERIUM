@@ -4,3 +4,13 @@ dist
 .netlify
 *.log
 
+# Agentes y skills
+.agents/
+.claude/
+.codebuddy/
+.continue/
+.junie/
+.kiro/
+skills-lock.json
+
+.playwright-cli/
