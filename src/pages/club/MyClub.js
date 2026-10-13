@@ -3,7 +3,8 @@
 // Diferenciación clara: interés (guardado) vs asistencia verificada (check-in)
 
 import { getState, unsaveEvent, setCurrentMember, subscribe } from '../../store.js';
-import { getVenue, VENUES } from '../../data/venues.js';
+import { getVenue } from '../../data/venues.js';
+import { icon } from '../../icons.js';
 
 export default function MyClub() {
   function formatSpanishDate(dateStr) {
@@ -25,11 +26,11 @@ export default function MyClub() {
   function getSegmentBadge(segment) {
     switch (segment) {
       case 'recurrente':
-        return '<span class="badge badge--accent">Miembro Recurrente</span>';
+        return '<span class="badge badge--accent">Recurrente</span>';
       case 'nuevo':
-        return '<span class="badge badge--success">Miembro Nuevo</span>';
+        return '<span class="badge badge--success">Nuevo</span>';
       case 'sin_interaccion':
-        return '<span class="badge badge--warning">Sin Interacción Reciente</span>';
+        return '<span class="badge badge--warning">Sin actividad reciente</span>';
       default:
         return `<span class="badge">${segment}</span>`;
     }
@@ -57,13 +58,13 @@ export default function MyClub() {
       const ven = ev ? (venues.find(v => v.id === ev.venueId) || getVenue(ev.venueId)) : null;
       activityTimeline.push({
         type: 'checkin',
-        title: `Check-in confirmado: ${ev ? ev.title : chk.eventId}`,
-        subtitle: `Validado en puerta por ${chk.validatedBy || 'Sistema'} (${chk.time || 'Noche'})`,
+        title: ev ? ev.title : chk.eventId,
+        subtitle: `Validado en puerta por ${chk.validatedBy || 'Sistema'}`,
         date: chk.date || '2026-10-16',
         venue: ven,
-        icon: '🎟️',
+        icon: 'ticket',
         badgeClass: 'badge--success',
-        badgeText: 'Asistencia Verificada',
+        badgeText: 'Asistencia',
       });
     });
 
@@ -72,13 +73,13 @@ export default function MyClub() {
       const ven = venues.find(v => v.id === ev.venueId) || getVenue(ev.venueId);
       activityTimeline.push({
         type: 'saved',
-        title: `Interés registrado: "${ev.title}"`,
-        subtitle: `Guardado en Mi Club para ${ev.dayLabel} (${ev.time} hrs)`,
+        title: ev.title,
+        subtitle: `Guardado para el ${ev.dayLabel.toLowerCase()} a las ${ev.time}`,
         date: '2026-10-16',
         venue: ven,
-        icon: '❤️',
+        icon: 'heart',
         badgeClass: 'badge--accent',
-        badgeText: 'Interés Previo (Guardado)',
+        badgeText: 'Interés',
       });
     });
 
@@ -88,22 +89,23 @@ export default function MyClub() {
       const ven = ev ? (venues.find(v => v.id === ev.venueId) || getVenue(ev.venueId)) : null;
       activityTimeline.push({
         type: int.type,
-        title: int.type === 'checkin' 
-          ? `Asistencia histórica: ${ev ? ev.title : int.eventId}` 
-          : `Interés previo: ${ev ? ev.title : int.eventId}`,
+        title: ev ? ev.title : int.eventId,
         subtitle: int.type === 'checkin' 
           ? 'Visita validada en local' 
           : 'Guardado en agenda de septiembre',
         date: int.date,
         venue: ven,
-        icon: int.type === 'checkin' ? '✓' : '📌',
-        badgeClass: int.type === 'checkin' ? 'badge--info' : 'badge--subtle',
-        badgeText: int.type === 'checkin' ? 'Visita Pasada' : 'Historial',
+        icon: int.type === 'checkin' ? 'check' : 'clock',
+        badgeClass: '',
+        badgeText: int.type === 'checkin' ? 'Visita pasada' : 'Interés pasado',
       });
     });
 
     // Ordenar cronológicamente descendente
     activityTimeline.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    // Garantiza que el miembro activo aparezca en el selector aunque no esté entre los 5 primeros
+    const m0 = (seg) => (member.segment === seg && members.filter(m => m.segment === seg).slice(0, 5).every(m => m.id !== member.id)) ? [member] : [];
 
     const initials = (member.name || 'Miembro')
       .split(' ')
@@ -114,154 +116,82 @@ export default function MyClub() {
 
     return `
       <div class="profile-section animate-fade-in">
-        <!-- Banner de Contexto de Demostración -->
-        <div class="panel-callout panel-callout--info" style="margin-bottom: var(--space-lg); border-left: 3px solid var(--color-accent);">
-          <div class="panel-callout__icon">👤</div>
-          <div class="panel-callout__content">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs);">
-              <div>
-                <strong>Modo Demostración Activo:</strong> Perfil simulado para la presentación comercial.
-              </div>
-              <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                <label for="member-switcher" style="font-size: var(--font-size-2xs); color: var(--color-text-dim); text-transform: uppercase;">
-                  Cambiar Miembro:
-                </label>
-                <select id="member-switcher" class="form-select form-select--sm" style="padding: 2px 8px; font-size: var(--font-size-xs); background: var(--color-surface-elevated); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
-                  ${members.slice(0, 15).map(m => `
-                    <option value="${m.id}" ${m.id === member.id ? 'selected' : ''}>
-                      ${m.name} (${m.segment})
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-            </div>
-          </div>
+        <div class="profile-switcher">
+          <label for="member-switcher">${icon('sliders', { size: 13 })} Presentador · ver como</label>
+          <select id="member-switcher" class="form-select form-select--sm">
+            ${[['recurrente', 'Recurrentes'], ['nuevo', 'Nuevos'], ['sin_interaccion', 'Sin actividad']].map(([seg, label]) => `
+              <optgroup label="${label}">
+                ${members.filter(m => m.segment === seg).slice(0, 5).concat(m0(seg)).map(m => `
+                  <option value="${m.id}" ${m.id === member.id ? 'selected' : ''}>${m.name}</option>
+                `).join('')}
+              </optgroup>
+            `).join('')}
+          </select>
         </div>
 
-        <!-- Tarjeta de Perfil del Miembro -->
-        <div class="profile-card">
-          <div class="profile-card__avatar-wrap">
-            <div class="avatar avatar--xl avatar--accent">
-              <span class="avatar__fallback" style="font-size: var(--font-size-2xl); font-weight: 800;">
-                ${initials}
-              </span>
-            </div>
-          </div>
-
+        <header class="profile-card">
+          <div class="profile-card__avatar">${initials}</div>
           <div class="profile-card__info">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: 4px;">
+            <div class="profile-card__top">
               <h1 class="profile-card__name">${member.name}</h1>
               ${getSegmentBadge(member.segment)}
             </div>
-
             <p class="profile-card__email">
-              Código de Miembro: <code>${member.id}</code>
+              Miembro desde el ${formatSpanishDate(member.registeredDate)} · <code>${member.id}</code>
             </p>
-
-            <div class="profile-card__meta">
-              <span class="badge badge--subtle" title="Fecha de alta">
-                🗓️ Registrado: ${formatSpanishDate(member.registeredDate)}
-              </span>
-              <span class="badge ${member.consent.email ? 'badge--success' : 'badge--danger'}" title="Consentimiento de invitaciones por correo">
-                📧 Email: ${member.consent.email ? 'Autorizado' : 'Sin permiso'}
-              </span>
-              <span class="badge ${member.consent.sms ? 'badge--success' : 'badge--subtle'}" title="Consentimiento de mensajes de texto">
-                📱 SMS: ${member.consent.sms ? 'Autorizado' : 'No activo'}
-              </span>
-            </div>
-
-            <!-- Resumen de Métricas del Usuario -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xs); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border-subtle); text-align: center;">
-              <div>
-                <span class="text-xs" style="color: var(--color-text-dim); text-transform: uppercase;">Guardados</span>
-                <div style="font-family: var(--font-display); font-size: var(--font-size-xl); font-weight: 800; color: var(--color-accent);">
-                  ${savedEventsList.length}
-                </div>
-              </div>
-              <div>
-                <span class="text-xs" style="color: var(--color-text-dim); text-transform: uppercase;">Locales</span>
-                <div style="font-family: var(--font-display); font-size: var(--font-size-xl); font-weight: 800; color: var(--color-text);">
-                  ${followedVenuesList.length}
-                </div>
-              </div>
-              <div>
-                <span class="text-xs" style="color: var(--color-text-dim); text-transform: uppercase;">Check-ins</span>
-                <div style="font-family: var(--font-display); font-size: var(--font-size-xl); font-weight: 800; color: var(--color-success);">
-                  ${(member.checkins || []).length}
-                </div>
-              </div>
-            </div>
+            <p class="profile-card__consent">
+              <span class="${member.consent.email ? 'is-on' : 'is-off'}">${icon(member.consent.email ? 'check' : 'x', { size: 13 })} Email</span>
+              <span class="${member.consent.sms ? 'is-on' : 'is-off'}">${icon(member.consent.sms ? 'check' : 'x', { size: 13 })} SMS</span>
+            </p>
           </div>
-        </div>
+          <dl class="profile-card__stats">
+            <div><dt>Guardados</dt><dd>${savedEventsList.length}</dd></div>
+            <div><dt>Locales</dt><dd>${followedVenuesList.length}</dd></div>
+            <div><dt>Check-ins</dt><dd>${(member.checkins || []).length}</dd></div>
+          </dl>
+        </header>
 
-        <!-- SECCIÓN 1: MIS EVENTOS GUARDADOS -->
-        <section style="margin-bottom: var(--space-2xl);">
-          <div class="section-header" style="margin-bottom: var(--space-md);">
+        <section class="profile-block">
+          <div class="section-header">
             <div class="section-title">
-              <span class="section-title__eyebrow">Mi Selección</span>
-              <h2 class="section-title__heading">Mis Eventos Guardados</h2>
-              <span class="section-title__desc">Eventos marcados con señal de interés en los 4 locales</span>
+              <h2 class="section-title__heading">Guardados</h2>
             </div>
-            <a href="#/discover" class="btn btn--secondary btn--sm">
-              + Explorar más eventos
-            </a>
+            <a href="#/discover" class="btn btn--secondary btn--sm">Ver agenda</a>
           </div>
 
           ${savedEventsList.length === 0 ? `
-            <div class="empty-state animate-fade-in">
-              <div class="empty-state__icon">⭐</div>
-              <h3 class="empty-state__title">Aún no tienes eventos guardados</h3>
-              <p class="empty-state__desc">
-                Explora la cartelera de este fin de semana en Señor Perú, Mood, Adriá y Play, y guarda los que quieras disfrutar.
-              </p>
-              <a href="#/discover" class="btn btn--primary btn--md">
-                Ir a Descubrir Eventos
-              </a>
+            <div class="empty-state">
+              <div class="empty-state__icon">${icon('heart', { size: 26 })}</div>
+              <h3 class="empty-state__title">Todavía nada guardado</h3>
+              <p class="empty-state__desc">Guarda eventos de la agenda y aparecerán aquí con su pase.</p>
+              <a href="#/discover" class="btn btn--primary btn--md">Ir a la agenda</a>
             </div>
           ` : `
             <div class="saved-list">
               ${savedEventsList.map(event => {
-                const venue = venues.find(v => v.id === event.venueId) || getVenue(event.venueId) || {
-                  name: event.venueId,
-                  icon: '📍',
-                  accentColor: '#D4A857',
-                };
-
+                const venue = venues.find(v => v.id === event.venueId) || getVenue(event.venueId) || { name: event.venueId, icon: '' };
                 return `
-                  <article class="saved-item" style="border-left: 3px solid ${venue.accentColor};">
+                  <article class="saved-item">
                     <img 
                       src="${event.image}" 
                       alt="${event.title}" 
                       class="saved-item__thumb"
+                      style="object-position: ${event.imagePosition || 'center'};"
                       onerror="this.onerror=null; this.src='/images/hero_principal.png';"
                     />
-
                     <div class="saved-item__details">
-                      <div class="saved-item__title">
-                        <a href="#/event/${event.id}">${event.title}</a>
-                      </div>
-                      <div class="saved-item__venue" style="color: ${venue.accentColor}; font-weight: 600;">
-                        ${venue.icon} ${venue.name}
-                      </div>
-                      <div class="saved-item__date">
-                        📅 ${event.dayLabel} · ⏰ ${event.time} hrs
-                      </div>
+                      <div class="saved-item__venue">${venue.icon}${venue.name} · ${event.dayLabel} · ${event.time}</div>
+                      <div class="saved-item__title"><a href="#/event/${event.id}">${event.title}</a></div>
                     </div>
-
-                    <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                      <a href="#/event/${event.id}" class="btn btn--sm btn--primary">
-                        Ver pase
-                      </a>
+                    <div class="saved-item__actions">
+                      <a href="#/event/${event.id}" class="btn btn--sm btn--secondary">Ver pase</a>
                       <button 
                         type="button" 
                         class="btn btn--sm btn--ghost btn-unsave-event" 
                         data-event-id="${event.id}"
-                        title="Quitar de guardados"
                         aria-label="Quitar de guardados"
-                        style="color: var(--color-danger);"
-                      >
-                        ✕
-                      </button>
+                        title="Quitar de guardados"
+                      >${icon('x', { size: 16 })}</button>
                     </div>
                   </article>
                 `;
@@ -270,117 +200,55 @@ export default function MyClub() {
           `}
         </section>
 
-        <!-- SECCIÓN 2: LOCALES QUE SIGO -->
-        <section style="margin-bottom: var(--space-2xl);">
-          <div class="section-header" style="margin-bottom: var(--space-md);">
+        <section class="profile-block">
+          <div class="section-header">
             <div class="section-title">
-              <span class="section-title__eyebrow">Comunidad</span>
-              <h2 class="section-title__heading">Locales que Sigo</h2>
-              <span class="section-title__desc">Marcas favoritas del grupo para recibir beneficios preferenciales</span>
+              <h2 class="section-title__heading">Locales que sigo</h2>
             </div>
           </div>
 
           ${followedVenuesList.length === 0 ? `
-            <div class="empty-state animate-fade-in">
-              <div class="empty-state__icon">📍</div>
-              <h3 class="empty-state__title">No sigues a ningún local todavía</h3>
-              <p class="empty-state__desc">
-                Sigue a Señor Perú, Mood, Adriá o Play desde el detalle de sus eventos para acceder a cortesías y accesos exclusivos.
-              </p>
-              <a href="#/discover" class="btn btn--secondary btn--sm">
-                Conocer los locales
-              </a>
-            </div>
+            <p class="profile-block__empty">Aún no sigues ningún local. Puedes hacerlo desde el detalle de cualquier evento.</p>
           ` : `
             <div class="followed-venues">
               ${followedVenuesList.map(venue => `
-                <div class="followed-venue-item" style="border-left: 3px solid ${venue.accentColor};">
+                <div class="followed-venue-item">
                   <div>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                      <span style="font-size: 1.25rem;">${venue.icon}</span>
-                      <strong style="font-family: var(--font-display); font-size: var(--font-size-md); color: var(--color-text);">
-                        ${venue.name}
-                      </strong>
-                    </div>
-                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
-                      ${venue.category || venue.tagline}
-                    </div>
-                    <div style="font-size: var(--font-size-2xs); color: var(--color-text-dim); margin-top: 4px;">
-                      🕒 ${venue.schedule}
-                    </div>
+                    <div class="followed-venue-item__name">${venue.icon}${venue.name}</div>
+                    <div class="followed-venue-item__meta">${venue.category} · ${venue.schedule}</div>
                   </div>
-
-                  <a 
-                    href="#/discover" 
-                    class="btn btn--sm btn--secondary" 
-                    title="Ver eventos de ${venue.name}"
-                    style="border-color: ${venue.accentColor}55; color: ${venue.accentColor};"
-                  >
-                    Ver agenda
-                  </a>
                 </div>
               `).join('')}
             </div>
           `}
         </section>
 
-        <!-- SECCIÓN 3: MI ACTIVIDAD (LÍNEA DE TIEMPO) -->
-        <section style="margin-bottom: var(--space-2xl);">
-          <div class="section-header" style="margin-bottom: var(--space-md);">
+        <section class="profile-block">
+          <div class="section-header">
             <div class="section-title">
-              <span class="section-title__eyebrow">Trazabilidad</span>
-              <h2 class="section-title__heading">Mi Actividad</h2>
-              <span class="section-title__desc">Historial cronológico diferenciando interés previo de asistencia en puerta</span>
+              <h2 class="section-title__heading">Actividad</h2>
             </div>
-          </div>
-
-          <div class="panel-callout panel-callout--info" style="margin-bottom: var(--space-md); font-size: var(--font-size-xs);">
-            <div class="panel-callout__icon">ℹ️</div>
-            <div class="panel-callout__content">
-              <strong>Regla Operativa:</strong> Un guardado refleja intención o consulta en el club. 
-              La asistencia solo se acredita cuando el personal de puerta realiza un <strong>check-in presencial</strong>.
-            </div>
+            <p class="discover-note">El interés se registra al guardar. La asistencia, solo con check-in en puerta.</p>
           </div>
 
           ${activityTimeline.length === 0 ? `
-            <div class="empty-state animate-fade-in">
-              <div class="empty-state__icon">⏳</div>
-              <h3 class="empty-state__title">Sin actividad registrada</h3>
-              <p class="empty-state__desc">
-                Guarda un evento o asiste a una sesión para ver tu historial de interacción en esta sección.
-              </p>
-            </div>
+            <p class="profile-block__empty">Sin actividad todavía.</p>
           ` : `
-            <div class="saved-list">
+            <ol class="activity-list">
               ${activityTimeline.map(item => `
-                <div class="saved-item" style="padding: var(--space-sm) var(--space-md);">
-                  <div style="display: flex; align-items: center; gap: var(--space-md); width: 100%;">
-                    <div style="font-size: 1.5rem; width: 40px; height: 40px; border-radius: 50%; background: var(--color-surface-elevated); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                      ${item.icon}
-                    </div>
-
-                    <div style="flex: 1; min-width: 0;">
-                      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); flex-wrap: wrap;">
-                        <strong style="font-family: var(--font-display); font-size: var(--font-size-sm); color: var(--color-text);">
-                          ${item.title}
-                        </strong>
-                        <span class="badge ${item.badgeClass}">
-                          ${item.badgeText}
-                        </span>
-                      </div>
-
-                      <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px;">
-                        ${item.subtitle}
-                      </div>
-
-                      <div style="font-size: var(--font-size-2xs); color: var(--color-text-dim); margin-top: 2px;">
-                        🗓️ ${item.date} ${item.venue ? `• ${item.venue.icon} ${item.venue.name}` : ''}
-                      </div>
-                    </div>
+                <li class="activity-list__item activity-list__item--${item.type}">
+                  <span class="activity-list__icon">${icon(item.icon, { size: 16 })}</span>
+                  <div class="activity-list__body">
+                    <strong>${item.title}</strong>
+                    <span>${item.subtitle}${item.venue ? ` · ${item.venue.name}` : ''}</span>
                   </div>
-                </div>
+                  <div class="activity-list__meta">
+                    <span class="badge ${item.badgeClass}">${item.badgeText}</span>
+                    <time>${item.date}</time>
+                  </div>
+                </li>
               `).join('')}
-            </div>
+            </ol>
           `}
         </section>
       </div>

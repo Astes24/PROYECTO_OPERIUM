@@ -19,6 +19,8 @@ export const EVENTS = [
     capacity: 250,
     savedCount: 52,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['Tributo', 'Música en vivo', 'Piura'],
     fictitious: true,
     benefit: {
@@ -43,6 +45,8 @@ export const EVENTS = [
     capacity: 220,
     savedCount: 38,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['Salsa & Cumbia', 'Jhon Kelvin', 'Orquesta en vivo'],
     fictitious: true,
     benefit: {
@@ -70,6 +74,8 @@ export const EVENTS = [
     capacity: 220,
     savedCount: 67,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['DJ Set', 'Deep House', 'Rooftop Piura'],
     fictitious: true,
     benefit: {
@@ -94,6 +100,8 @@ export const EVENTS = [
     capacity: 200,
     savedCount: 45,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['Salsa en vivo', 'Orquesta', 'Mood Live'],
     fictitious: true,
     benefit: {
@@ -116,11 +124,16 @@ export const EVENTS = [
     time: '20:30',
     endTime: '03:00',
     image: '/images/real_adria_amigos.jpg',
+    // Captura de Instagram: recorta franjas negras y la flecha del carrusel
+    imageZoom: 1.5,
+    imagePosition: '45% 58%',
     video: '/videos/adria.mp4',
     reelUrl: 'https://www.instagram.com/reel/Dch2iPpNi4y/',
     capacity: 150,
     savedCount: 36,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['#adrianights', 'Lounge Bar', 'Coctelería'],
     fictitious: true,
     benefit: {
@@ -141,10 +154,15 @@ export const EVENTS = [
     time: '22:00',
     endTime: '03:30',
     image: '/images/real_adria_selfie.jpg',
+    // Captura de Instagram: recorta franjas negras y la flecha del carrusel
+    imageZoom: 1.5,
+    imagePosition: '45% 58%',
     video: '/videos/adria.mp4',
     capacity: 120,
     savedCount: 29,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['Party', 'DJ Live', 'Afterdinner'],
     fictitious: true,
     benefit: {
@@ -171,6 +189,8 @@ export const EVENTS = [
     capacity: 400,
     savedCount: 94,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['Láser Show', 'Neón', 'Play Piura'],
     fictitious: true,
     benefit: {
@@ -195,6 +215,8 @@ export const EVENTS = [
     capacity: 350,
     savedCount: 48,
     checkinCount: 0,
+    savedAttended: 0, // de quienes guardaron, cuántos ingresaron
+    finished: false,
     tags: ['DJ Session', 'Club Live', 'Electro & Urban'],
     fictitious: true,
     benefit: {

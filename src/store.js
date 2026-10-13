@@ -22,7 +22,9 @@ const SEED = {
   // Current demo context
   currentMemberId: 'member-001',
   currentRole: 'publico', // publico | promotor | marketing | ventas | encargado | grupo
-  currentVenueId: 'mood',
+  currentVenueId: 'all', // 'all' = todo el grupo; si no, id del local en foco
+  // Módulos del negocio ocultos por el presentador (p. ej. si el cliente ya tiene uno)
+  hiddenModules: [],
   // Notifications / toast
   notifications: [],
   // Tour state
@@ -130,7 +132,7 @@ export function simulatePromoterSignal(promoterId, memberId, eventId) {
   if (existing) return false;
 
   const signal = {
-    date: '2026-10-16',
+    date: '2026-10-15',
     type: 'link_click',
     memberId,
     eventId,
@@ -138,9 +140,9 @@ export function simulatePromoterSignal(promoterId, memberId, eventId) {
   };
 
   promoter.signals.push(signal);
-  promoter.signalCount = promoter.signals.length;
 
-  addNotification(`Señal registrada: ${promoter.name} → ${memberId}`);
+  const member = state.members.find(m => m.id === memberId);
+  addNotification(`Visita atribuida a ${promoter.name}: ${member ? member.name : memberId}`);
   notify();
   return true;
 }
@@ -196,7 +198,7 @@ export function sendCampaign(campaignId) {
     saved: Math.floor(eligible.length * 0.15),
   };
 
-  addNotification(`Campaña "${campaign.name}" enviada (DEMO) a ${eligible.length} miembros`);
+  addNotification(`Campaña enviada a ${eligible.length} miembros (simulado)`);
   notify();
   return true;
 }
@@ -219,15 +221,19 @@ export function checkIn(memberId, eventId, validatedBy = 'Sistema') {
 
   const checkin = {
     eventId,
-    date: '2026-10-16',
+    date: event.date,
     time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
     validatedBy,
   };
 
   member.checkins.push(checkin);
   event.checkinCount = (event.checkinCount || 0) + 1;
+  // Conversión: solo cuenta si este miembro había guardado el evento
+  if (member.savedEvents.includes(eventId)) {
+    event.savedAttended = (event.savedAttended || 0) + 1;
+  }
 
-  addNotification(`Check-in: ${member.firstName} → "${event.title}" ✓`);
+  addNotification(`Check-in: ${member.firstName} → "${event.title}"`);
   notify();
   return { success: true, checkin };
 }
@@ -238,9 +244,9 @@ export function startTour() {
   notify();
 }
 
-export function nextTourStep() {
+export function nextTourStep(total = 6) {
   state.tourStep++;
-  if (state.tourStep > 5) {
+  if (state.tourStep > total - 1) {
     state.tourStep = -1;
     state.tourCompleted = true;
   }
@@ -254,8 +260,8 @@ export function prevTourStep() {
   }
 }
 
-export function setTourStep(step) {
-  state.tourStep = Math.max(0, Math.min(5, step));
+export function setTourStep(step, total = 6) {
+  state.tourStep = Math.max(0, Math.min(total - 1, step));
   notify();
 }
 
@@ -264,39 +270,56 @@ export function endTour() {
   notify();
 }
 
-// — Simulate full weekend —
-export function simulateWeekend() {
-  // Step 1: Some members save events
-  const savePairs = [
-    ['member-001', 'ev-mood-01'],
-    ['member-002', 'ev-play-01'],
-    ['member-003', 'ev-sp-01'],
-    ['member-004', 'ev-adria-01'],
-    ['member-005', 'ev-mood-02'],
-    ['member-010', 'ev-sp-02'],
-    ['member-015', 'ev-play-02'],
-    ['member-020', 'ev-adria-02'],
-    ['member-025', 'ev-mood-01'],
-    ['member-030', 'ev-play-01'],
-  ];
-  savePairs.forEach(([mid, eid]) => saveEvent(mid, eid));
+// — Simular la noche del viernes —
+// Ritmo realista por local: ocupación del aforo y % de quienes guardaron que llegan.
+const FRIDAY_RATES = {
+  'senor-peru': { occupancy: 0.72, conversion: 0.48 },
+  mood: { occupancy: 0.74, conversion: 0.62 },
+  adria: { occupancy: 0.70, conversion: 0.58 },
+  play: { occupancy: 0.77, conversion: 0.43 },
+};
 
-  // Step 2: Promoter signals
+export function simulateFriday() {
+  // 1. Últimos guardados y visitas por enlace antes de abrir
+  [
+    ['member-001', 'ev-mood-01'], ['member-025', 'ev-mood-01'], ['member-003', 'ev-sp-01'],
+    ['member-004', 'ev-adria-01'], ['member-002', 'ev-play-01'], ['member-030', 'ev-play-01'],
+  ].forEach(([mid, eid]) => saveEvent(mid, eid));
   simulatePromoterSignal('promo-01', 'member-006', 'ev-mood-01');
-  simulatePromoterSignal('promo-01', 'member-007', 'ev-mood-01');
   simulatePromoterSignal('promo-02', 'member-009', 'ev-play-01');
+  simulatePromoterSignal('promo-03', 'member-011', 'ev-sp-01');
 
-  // Step 3: Some check-ins
-  const checkinPairs = [
+  // 2. Cifras de la noche: ingresos y conversión agregados por evento
+  state.events.filter(e => e.date === '2026-10-16' && !e.finished).forEach(event => {
+    const rate = FRIDAY_RATES[event.venueId] || { occupancy: 0.7, conversion: 0.5 };
+    event.checkinCount = Math.max(event.checkinCount || 0, Math.round(event.capacity * rate.occupancy));
+    event.savedAttended = Math.max(event.savedAttended || 0, Math.round(event.savedCount * rate.conversion));
+    event.finished = true;
+  });
+
+  // 3. Algunos ingresos con nombre propio para la actividad reciente
+  [
     ['member-001', 'ev-mood-01', 'Valentina R.'],
+    ['member-025', 'ev-mood-01', 'Valentina R.'],
     ['member-003', 'ev-sp-01', 'Carlos M.'],
     ['member-004', 'ev-adria-01', 'Andrés P.'],
     ['member-002', 'ev-play-01', 'Diego F.'],
-    ['member-025', 'ev-mood-01', 'Valentina R.'],
-  ];
-  checkinPairs.forEach(([mid, eid, by]) => checkIn(mid, eid, by));
+  ].forEach(([mid, eid, by]) => {
+    const member = state.members.find(m => m.id === mid);
+    if (member && !member.checkins.some(c => c.eventId === eid)) {
+      member.checkins.push({ eventId: eid, date: '2026-10-16', time: '23:40', validatedBy: by });
+    }
+  });
 
-  addNotification('Simulación de fin de semana completada');
+  addNotification('Noche del viernes simulada');
+  notify();
+}
+
+// — Módulos visibles en el negocio —
+export function setModuleHidden(moduleId, hidden) {
+  const set = new Set(state.hiddenModules);
+  if (hidden) set.add(moduleId); else set.delete(moduleId);
+  state.hiddenModules = [...set];
   notify();
 }
 
@@ -316,37 +339,6 @@ function addNotification(message) {
 // ========================
 // COMPUTED METRICS
 // ========================
-
-export function getVenueMetrics(venueId) {
-  const venueEvents = state.events.filter(e => e.venueId === venueId);
-  const totalSaved = venueEvents.reduce((sum, e) => sum + (e.savedCount || 0), 0);
-  const totalCheckins = venueEvents.reduce((sum, e) => sum + (e.checkinCount || 0), 0);
-  const totalCapacity = venueEvents.reduce((sum, e) => sum + (e.capacity || 0), 0);
-
-  // Members who follow this venue
-  const followers = state.members.filter(m => m.following.includes(venueId)).length;
-
-  // Promoter signals for this venue
-  const venuePromoters = state.promoters.filter(p => p.venue === venueId);
-  const totalSignals = venuePromoters.reduce((sum, p) => sum + p.signals.length, 0);
-
-  return {
-    events: venueEvents.length,
-    totalSaved,
-    totalCheckins,
-    totalCapacity,
-    followers,
-    totalSignals,
-    conversionRate: totalSaved > 0 ? ((totalCheckins / totalSaved) * 100).toFixed(1) : '0.0',
-  };
-}
-
-export function getGroupMetrics() {
-  return state.venues.map(v => ({
-    venue: v,
-    metrics: getVenueMetrics(v.id),
-  }));
-}
 
 export function getCampaignMetrics(campaignId) {
   const campaign = state.campaigns.find(c => c.id === campaignId);

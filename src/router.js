@@ -7,6 +7,12 @@ export function route(path, handler) {
   routes[path] = handler;
 }
 
+// Rutas antiguas que redirigen a las nuevas (enlaces guardados, recorrido, etc.)
+const aliases = {};
+export function alias(from, to) {
+  aliases[from] = to;
+}
+
 export function navigate(hash) {
   window.location.hash = hash;
 }
@@ -53,6 +59,10 @@ function matchRoute(hash) {
 export function startRouter(appEl) {
   async function render() {
     const hash = getCurrentRoute();
+    if (aliases[hash]) {
+      window.location.replace(`#${aliases[hash]}`);
+      return;
+    }
     const matched = matchRoute(hash);
 
     if (!matched) {

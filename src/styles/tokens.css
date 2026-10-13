@@ -1,7 +1,7 @@
 /**
  * OPERIUM CLUB DE ENTRETENIMIENTO — DESIGN SYSTEM TOKENS
- * Sistema de diseño premium para entretenimiento nocturno de alta gama.
- * Paleta editorial: carbón oscuro, marfil cálido y ámbar dorado.
+ * Dirección: editorial nocturno. Negro cálido, marfil, un solo acento ámbar.
+ * Público: Big Shoulders Display (cartel nocturno). Negocio: todo en Archivo. Sin brillos.
  * 
  * DATOS FICTICIOS — DEMO
  */
@@ -12,26 +12,26 @@
      ========================================================================== */
 
   /* Base Background & Surfaces */
-  --color-bg: #0D0D0D;
-  --color-bg-alt: #121212;
-  --color-surface: #1A1A1A;
-  --color-surface-elevated: #222222;
-  --color-surface-hover: #2A2A2A;
-  --color-surface-active: #323232;
-  --color-surface-translucent: rgba(26, 26, 26, 0.85);
-  --color-surface-glass: rgba(26, 26, 26, 0.65);
+  --color-bg: #0B0A09;
+  --color-bg-alt: #100F0D;
+  --color-surface: #141210;
+  --color-surface-elevated: #1A1815;
+  --color-surface-hover: #221F1B;
+  --color-surface-active: #2A2621;
+  --color-surface-translucent: rgba(20, 18, 16, 0.9);
+  --color-surface-glass: rgba(20, 18, 16, 0.75);
 
   /* Borders & Dividers */
-  --color-border: #333333;
-  --color-border-subtle: #242424;
-  --color-border-hover: #4A4A4A;
-  --color-border-accent: rgba(212, 168, 87, 0.4);
-  --color-border-glow: rgba(212, 168, 87, 0.6);
+  --color-border: #2B2723;
+  --color-border-subtle: #1F1C19;
+  --color-border-hover: #423C35;
+  --color-border-accent: rgba(212, 168, 87, 0.35);
+  --color-border-glow: rgba(212, 168, 87, 0.35);
 
   /* Typography Colors */
   --color-text: #FAF3E8;            /* Marfil cálido */
-  --color-text-muted: #A89F91;      /* Gris arena suave */
-  --color-text-dim: #6B6359;        /* Carbón apagado */
+  --color-text-muted: #ADA394;      /* Gris arena suave */
+  --color-text-dim: #8A8174;        /* Carbón apagado */
   --color-text-inverse: #0D0D0D;    /* Negro para fondos claros */
 
   /* Primary Brand Accent (Ámbar Dorado) */
@@ -40,63 +40,65 @@
   --color-accent-active: #B88E3E;   /* Ámbar profundo */
   --color-accent-dim: #997838;      /* Ámbar apagado */
   --color-accent-rgb: 212, 168, 87;
-  --color-accent-glow: rgba(212, 168, 87, 0.15);
+  --color-accent-glow: rgba(212, 168, 87, 0.12);
   --color-accent-subtle: rgba(212, 168, 87, 0.08);
 
   /* Venue Accents (4 Locales del Grupo) */
   /* 1. Señor Perú: Rojo terracota peruano */
   --color-senor-peru: #C4513D;
   --color-senor-peru-rgb: 196, 81, 61;
-  --color-senor-peru-glow: rgba(196, 81, 61, 0.18);
+  --color-senor-peru-glow: transparent;
   --color-senor-peru-subtle: rgba(196, 81, 61, 0.08);
 
   /* 2. Mood: Púrpura rooftop nocturno */
-  --color-mood: #9B59B6;
-  --color-mood-rgb: 155, 89, 182;
-  --color-mood-glow: rgba(155, 89, 182, 0.18);
+  --color-mood: #A67BC4;
+  --color-mood-rgb: 166, 123, 196;
+  --color-mood-glow: transparent;
   --color-mood-subtle: rgba(155, 89, 182, 0.08);
 
   /* 3. Adriá: Azul mediterráneo profundo */
-  --color-adria: #2E86AB;
-  --color-adria-rgb: 46, 134, 171;
-  --color-adria-glow: rgba(46, 134, 171, 0.18);
+  --color-adria: #4E97B8;
+  --color-adria-rgb: 78, 151, 184;
+  --color-adria-glow: transparent;
   --color-adria-subtle: rgba(46, 134, 171, 0.08);
 
   /* 4. Play: Verde neón eléctrico */
-  --color-play: #7ED321;
-  --color-play-rgb: 126, 211, 33;
-  --color-play-glow: rgba(126, 211, 33, 0.18);
+  --color-play: #9CCB4A;
+  --color-play-rgb: 156, 203, 74;
+  --color-play-glow: transparent;
   --color-play-subtle: rgba(126, 211, 33, 0.08);
 
   /* Status & Semantic Colors */
-  --color-success: #2ECC71;
-  --color-success-bg: rgba(46, 204, 113, 0.12);
-  --color-success-border: rgba(46, 204, 113, 0.35);
+  --color-success: #6BBF84;
+  --color-success-bg: rgba(107, 191, 132, 0.1);
+  --color-success-border: rgba(107, 191, 132, 0.3);
 
-  --color-warning: #F39C12;
-  --color-warning-bg: rgba(243, 156, 18, 0.12);
-  --color-warning-border: rgba(243, 156, 18, 0.35);
+  --color-warning: #E0A345;
+  --color-warning-bg: rgba(224, 163, 69, 0.1);
+  --color-warning-border: rgba(224, 163, 69, 0.3);
 
-  --color-danger: #E74C3C;
-  --color-danger-bg: rgba(231, 76, 60, 0.12);
-  --color-danger-border: rgba(231, 76, 60, 0.35);
+  --color-danger: #D9654F;
+  --color-danger-bg: rgba(217, 101, 79, 0.1);
+  --color-danger-border: rgba(217, 101, 79, 0.3);
 
-  --color-info: #3498DB;
-  --color-info-bg: rgba(52, 152, 219, 0.12);
-  --color-info-border: rgba(52, 152, 219, 0.35);
+  --color-info: #7FA9C4;
+  --color-info-bg: rgba(127, 169, 196, 0.1);
+  --color-info-border: rgba(127, 169, 196, 0.3);
 
   /* Demo Banner Color */
-  --color-demo-gold: #FFB800;
-  --color-demo-bg: #1B1607;
-  --color-demo-border: #6B4E00;
+  --color-demo-gold: #D4A857;
+  --color-demo-bg: #0B0A09;
+  --color-demo-border: #2B2723;
 
   /* ==========================================================================
      2. TYPOGRAPHY
      ========================================================================== */
 
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-display: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Display: cartel condensado en Público; editorial.css la cambia por Archivo en Negocio */
+  --font-serif: 'Big Shoulders Display Variable', 'Arial Narrow', Impact, sans-serif;
+  --font-body: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Font Scales */
   --font-size-2xs: 0.6875rem; /* 11px */
@@ -153,7 +155,7 @@
 
   /* Header & Navigation Heights */
   --header-height: 64px;
-  --demo-banner-height: 38px;
+  --demo-banner-height: 32px;
   --bottom-nav-height: 68px;
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 72px;
@@ -164,10 +166,10 @@
 
   --radius-xs: 3px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
   --radius-full: 9999px;
 
   /* ==========================================================================
@@ -179,10 +181,10 @@
   --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.7);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.85);
 
-  --shadow-glow-accent: 0 0 24px rgba(212, 168, 87, 0.25);
-  --shadow-glow-accent-strong: 0 0 36px rgba(212, 168, 87, 0.45);
+  --shadow-glow-accent: 0 0 0 transparent;
+  --shadow-glow-accent-strong: 0 0 0 transparent;
   --shadow-inner: inset 0 1px 3px rgba(0, 0, 0, 0.6);
-  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(212, 168, 87, 0.12);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.55);
 
   /* ==========================================================================
      6. TRANSITIONS & TIMING

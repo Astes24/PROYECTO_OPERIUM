@@ -4,6 +4,7 @@
 
 import { getState, saveEvent, unsaveEvent, subscribe } from '../../store.js';
 import { getVenue, VENUES } from '../../data/venues.js';
+import { icon } from '../../icons.js';
 
 export default function Discover() {
   // Estado local para los filtros de navegación
@@ -26,11 +27,9 @@ export default function Discover() {
     if (filteredEvents.length === 0) {
       return `
         <div class="empty-state animate-fade-in" style="grid-column: 1 / -1; margin: var(--space-xl) auto; max-width: 500px;">
-          <div class="empty-state__icon">🔍</div>
-          <h3 class="empty-state__title">No hay eventos con estos filtros</h3>
-          <p class="empty-state__desc">
-            No encontramos eventos que coincidan con la combinación seleccionada. Prueba cambiando el local o la fecha.
-          </p>
+          <div class="empty-state__icon">${icon('search', { size: 28 })}</div>
+          <h3 class="empty-state__title">Nada para esta combinación</h3>
+          <p class="empty-state__desc">Prueba con otro local u otra fecha.</p>
           <button type="button" class="btn btn--secondary btn--sm btn-reset-filters">
             Mostrar todos los eventos
           </button>
@@ -41,91 +40,53 @@ export default function Discover() {
     return filteredEvents.map(event => {
       const venue = getVenue(event.venueId) || {
         name: event.venueId,
-        icon: '📍',
+        icon: '',
         accentColor: '#D4A857',
       };
       const isSaved = savedEventIds.has(event.id);
 
       return `
         <article 
-          class="event-card" 
+          class="event-card ${isSaved ? 'event-card--saved' : ''}" 
           data-venue="${event.venueId}" 
           style="--venue-accent: ${venue.accentColor};"
         >
-          <!-- Contenedor de Imagen -->
-          <div class="event-card__image-wrap">
+          <a href="#/event/${event.id}" class="event-card__image-wrap" tabindex="-1" aria-hidden="true">
             <img 
               src="${event.image}" 
-              alt="${event.title}" 
+              alt="" 
               class="event-card__image" 
+              style="--img-zoom: ${event.imageZoom || 1.04}; object-position: ${event.imagePosition || 'center'};"
               loading="lazy"
               onerror="this.onerror=null; this.src='/images/hero_principal.png';"
             />
             <div class="event-card__image-overlay"></div>
-
-            <!-- Badges superiores -->
             <div class="event-card__badges">
-              <span 
-                class="badge badge--venue" 
-                style="background-color: ${venue.accentColor}26; color: ${venue.accentColor}; border: 1px solid ${venue.accentColor}66;"
-              >
-                <span>${venue.icon}</span>
-                <span>${venue.name}</span>
-              </span>
-              <span class="badge badge--demo" title="Demostración ficticia">DEMO</span>
+              <span class="event-card__venue">${venue.icon}${venue.name}</span>
             </div>
+          </a>
 
-            <!-- Botón de Guardado (Corazón) -->
-            <button 
-              type="button" 
-              class="event-card__save-btn ${isSaved ? 'event-card__save-btn--active' : ''}" 
-              data-event-id="${event.id}" 
-              aria-label="${isSaved ? 'Quitar de guardados' : 'Guardar evento'}"
-              title="${isSaved ? 'Guardado en Mi Club' : 'Guardar en Mi Club'}"
-            >
-              ${isSaved ? `
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              ` : `
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-              `}
-            </button>
-          </div>
-
-          <!-- Contenido de la Tarjeta -->
           <div class="event-card__content">
-            <div class="event-card__date">
-              <span>📅</span>
-              <span>${event.dayLabel} · ${event.time} hrs</span>
-            </div>
-
+            <div class="event-card__date">${event.dayLabel} · ${event.time}</div>
             <h3 class="event-card__title">
               <a href="#/event/${event.id}" class="event-card__title-link">${event.title}</a>
             </h3>
-
             <p class="event-card__subtitle">${event.subtitle}</p>
+            <p class="event-card__saved-count"><span class="save-count-num">${event.savedCount || 0}</span> personas lo guardaron</p>
 
-            <!-- Tags -->
-            <div class="event-card__tags">
-              ${(event.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-
-            <!-- Pie de Tarjeta -->
             <div class="event-card__footer">
-              <span class="event-card__saved-count">
-                <span style="color: ${isSaved ? 'var(--color-accent)' : 'inherit'};">♥</span>
-                <strong class="save-count-num">${event.savedCount || 0}</strong> guardados
-              </span>
-              <a href="#/event/${event.id}" class="btn btn--sm btn--primary event-card__cta">
-                Ver detalle
+              <button 
+                type="button" 
+                class="btn btn--sm ${isSaved ? 'btn--saved' : 'btn--secondary'} event-card__save-btn" 
+                data-event-id="${event.id}" 
+                aria-pressed="${isSaved}"
+              >
+                ${icon(isSaved ? 'check' : 'heart', { size: 15 })}
+                <span>${isSaved ? 'Guardado' : 'Guardar'}</span>
+              </button>
+              <a href="#/event/${event.id}" class="event-card__cta">
+                Ver evento ${icon('right', { size: 14 })}
               </a>
-            </div>
-
-            <div class="event-card__disclaimer">
-              Evento ficticio para demostración
             </div>
           </div>
         </article>
@@ -158,25 +119,20 @@ export default function Discover() {
           <div class="club-hero__overlay"></div>
 
           <div class="club-hero__content">
-            <div class="club-hero__eyebrow">
-              <span>◆</span>
-              <span>Operium Club • 16 y 17 de Octubre 2026</span>
-            </div>
+            <div class="club-hero__eyebrow">Operium Club · Piura · 16 y 17 de octubre</div>
 
             <h1 class="club-hero__title">Este fin de semana</h1>
 
             <p class="club-hero__subtitle">
-              Descubre lo mejor de la noche en cuatro experiencias únicas: Señor Perú, Mood, Adriá y Play.
+              Cuatro locales, una sola agenda: Señor Perú, Mood, Adriá y Play.
             </p>
 
             <div class="club-hero__actions">
+              <button type="button" class="btn btn--primary btn--md" id="btn-hero-agenda">
+                Ver la agenda ${icon('right', { size: 16 })}
+              </button>
               <a href="#/myclub" class="btn btn--secondary btn--md">
-                <span>⭐ Mi Club</span>
-                <span class="badge badge--accent">${savedCountTotal} guardados</span>
-              </a>
-              <a href="#/event/ev-mood-01" class="btn btn--primary btn--md">
-                <span>Explorar Mood Sessions</span>
-                <span>➔</span>
+                Mi Club${savedCountTotal ? ` · ${savedCountTotal} ${savedCountTotal === 1 ? 'guardado' : 'guardados'}` : ''}
               </a>
             </div>
           </div>
@@ -184,92 +140,34 @@ export default function Discover() {
 
         <!-- Contenedor Principal de Contenido -->
         <div class="container" style="padding-top: var(--space-xl);">
-          <!-- Nota pedagógica de diferenciación de métricas -->
-          <div class="panel-callout panel-callout--info" style="margin-bottom: var(--space-lg); border-left: 3px solid var(--color-accent);">
-            <div class="panel-callout__icon">💡</div>
-            <div class="panel-callout__content" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
-              <strong>Diferenciación de Demostración:</strong> 
-              Guardar un evento registra tu <em>señal de interés</em> en el club. 
-              <strong>Guardado ≠ Asistencia verificada ≠ Venta en caja</strong>.
+          <div class="section-header" id="discover-agenda">
+            <div class="section-title">
+              <span class="section-title__eyebrow">Agenda</span>
+              <h2 class="section-title__heading">Qué pasa este fin de semana</h2>
             </div>
+            <p class="discover-note">Guardar un evento es una señal de interés. No es asistencia ni venta.</p>
           </div>
 
-          <!-- Filtros de Locales -->
-          <div class="filter-section" style="margin-bottom: var(--space-md);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-xs); padding: 0 4px;">
-              <span class="form-label" style="margin: 0; font-size: var(--font-size-2xs); color: var(--color-text-dim);">
-                Filtrar por local:
-              </span>
-              <span class="text-xs" id="filter-venue-status" style="color: var(--color-text-dim);">
-                ${currentVenueFilter === 'all' ? 'Todos los locales' : getVenue(currentVenueFilter)?.name || ''}
-              </span>
-            </div>
-
+          <div class="discover-filters">
             <div class="venue-filters" id="venue-filter-bar">
               <button 
                 type="button" 
-                class="venue-chip venue-chip--all ${currentVenueFilter === 'all' ? 'venue-chip--active' : ''}" 
+                class="chip ${currentVenueFilter === 'all' ? 'chip--active' : ''}" 
                 data-venue="all"
-              >
-                <span>✨</span>
-                <span>Todos</span>
-              </button>
-
+              >Todos</button>
               ${VENUES.map(v => `
                 <button 
                   type="button" 
-                  class="venue-chip venue-chip--${v.id} ${currentVenueFilter === v.id ? 'venue-chip--active' : ''}" 
+                  class="chip ${currentVenueFilter === v.id ? 'chip--active' : ''}" 
                   data-venue="${v.id}"
-                  style="--chip-color: ${v.accentColor};"
-                >
-                  <span class="venue-chip__dot" style="background-color: ${v.accentColor};"></span>
-                  <span>${v.icon}</span>
-                  <span>${v.name}</span>
-                </button>
+                >${v.icon}${v.name}</button>
               `).join('')}
             </div>
-          </div>
-
-          <!-- Filtros de Fechas -->
-          <div class="filter-section" style="margin-bottom: var(--space-xl);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-xs); padding: 0 4px;">
-              <span class="form-label" style="margin: 0; font-size: var(--font-size-2xs); color: var(--color-text-dim);">
-                Filtrar por fecha:
-              </span>
-              <span class="text-xs" style="color: var(--color-text-dim);">Octubre 2026</span>
-            </div>
-
-            <div style="display: flex; gap: var(--space-xs); flex-wrap: wrap;">
-              <button 
-                type="button" 
-                class="chip ${currentDateFilter === 'all' ? 'chip--active' : ''}" 
-                data-date="all"
-              >
-                <span>🗓️ Todas las fechas</span>
-              </button>
-              <button 
-                type="button" 
-                class="chip ${currentDateFilter === '2026-10-16' ? 'chip--active' : ''}" 
-                data-date="2026-10-16"
-              >
-                <span>Viernes 16 Oct</span>
-              </button>
-              <button 
-                type="button" 
-                class="chip ${currentDateFilter === '2026-10-17' ? 'chip--active' : ''}" 
-                data-date="2026-10-17"
-              >
-                <span>Sábado 17 Oct</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Cabecera de la sección de eventos -->
-          <div class="section-header" style="margin-bottom: var(--space-md);">
-            <div class="section-title">
-              <span class="section-title__eyebrow">Agenda Exclusiva</span>
-              <h2 class="section-title__heading">Experiencias y Eventos</h2>
-              <span class="section-title__desc">Explora la propuesta nocturna de los 4 locales del grupo</span>
+            <span class="discover-filters__sep" aria-hidden="true"></span>
+            <div class="date-filters">
+              <button type="button" class="chip ${currentDateFilter === 'all' ? 'chip--active' : ''}" data-date="all">Ambos días</button>
+              <button type="button" class="chip ${currentDateFilter === '2026-10-16' ? 'chip--active' : ''}" data-date="2026-10-16">Vie 16</button>
+              <button type="button" class="chip ${currentDateFilter === '2026-10-17' ? 'chip--active' : ''}" data-date="2026-10-17">Sáb 17</button>
             </div>
           </div>
 
@@ -300,12 +198,12 @@ export default function Discover() {
     }
 
     function updateVenueChipsUI() {
-      document.querySelectorAll('#venue-filter-bar .venue-chip').forEach(chip => {
+      document.querySelectorAll('#venue-filter-bar .chip').forEach(chip => {
         const venue = chip.dataset.venue;
         if (venue === currentVenueFilter) {
-          chip.classList.add('venue-chip--active');
+          chip.classList.add('chip--active');
         } else {
-          chip.classList.remove('venue-chip--active');
+          chip.classList.remove('chip--active');
         }
       });
     }
@@ -359,7 +257,7 @@ export default function Discover() {
     }
 
     // Filtros de Local
-    document.querySelectorAll('#venue-filter-bar .venue-chip').forEach(chip => {
+    document.querySelectorAll('#venue-filter-bar .chip').forEach(chip => {
       chip.addEventListener('click', () => {
         currentVenueFilter = chip.dataset.venue || 'all';
         updateVenueChipsUI();
@@ -374,6 +272,11 @@ export default function Discover() {
         updateDateChipsUI();
         refreshGrid();
       });
+    });
+
+    // El router usa el hash, así que el salto a la agenda se hace por JS
+    document.getElementById('btn-hero-agenda')?.addEventListener('click', () => {
+      document.getElementById('discover-agenda')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     // Inicializar listeners de tarjetas

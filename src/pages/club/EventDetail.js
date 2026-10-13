@@ -3,6 +3,7 @@
 
 import { getState, saveEvent, unsaveEvent, followVenue, subscribe } from '../../store.js';
 import { getVenue } from '../../data/venues.js';
+import { icon } from '../../icons.js';
 
 export default function EventDetail(params = {}) {
   // Parsear el ID del evento desde params o hash
@@ -19,7 +20,7 @@ export default function EventDetail(params = {}) {
       return `
         <div class="container" style="padding: var(--space-3xl) var(--space-md); text-align: center;">
           <div class="empty-state animate-fade-in" style="max-width: 500px; margin: 0 auto;">
-            <div class="empty-state__icon">🔍</div>
+            <div class="empty-state__icon">${icon('search', { size: 28 })}</div>
             <h2 class="empty-state__title">Evento no encontrado</h2>
             <p class="empty-state__desc">El identificador <code>${eventId || 'desconocido'}</code> no corresponde a ningún evento ficticio de la agenda.</p>
             <a href="#/discover" class="btn btn--primary btn--md">Volver a Descubrir</a>
@@ -30,10 +31,10 @@ export default function EventDetail(params = {}) {
 
     const venue = venues.find(v => v.id === event.venueId) || getVenue(event.venueId) || {
       name: event.venueId,
-      icon: '📍',
+      icon: '',
       accentColor: '#D4A857',
       schedule: 'Consulte horario',
-      address: 'Miraflores, Lima',
+      address: 'Piura',
       manager: 'Administración',
     };
 
@@ -45,213 +46,113 @@ export default function EventDetail(params = {}) {
 
     return `
       <div class="event-detail animate-fade-in">
-        <!-- Botón Volver -->
         <a href="#/discover" class="event-detail__back" id="btn-back-discover">
-          <span>←</span>
-          <span>Volver a la agenda</span>
+          ${icon('left', { size: 16 })} Agenda
         </a>
 
-        <!-- Hero Visual con Imagen a Pantalla Completa -->
-        <div class="event-detail__hero" style="border-color: ${venue.accentColor}44;">
+        <div class="event-detail__hero">
           <img 
             src="${event.image}" 
             alt="${event.title}" 
             class="event-detail__hero-img"
+            style="--img-zoom: ${event.imageZoom || 1.04}; object-position: ${event.imagePosition || 'center'};"
             onerror="this.onerror=null; this.src='/images/hero_principal.png';"
           />
           <div class="event-detail__hero-overlay"></div>
-
           <div class="event-detail__hero-meta">
-            <div>
-              <div style="display: flex; gap: var(--space-xs); margin-bottom: var(--space-xs); align-items: center; flex-wrap: wrap;">
-                <span 
-                  class="badge badge--venue" 
-                  style="background-color: ${venue.accentColor}33; color: ${venue.accentColor}; border: 1px solid ${venue.accentColor}88;"
-                >
-                  <span>${venue.icon}</span>
-                  <span>${venue.name}</span>
-                </span>
-                <span class="badge badge--accent">
-                  📅 ${event.dayLabel} · ${event.time} hrs
-                </span>
-              </div>
-              <h1 class="event-detail__title">${event.title}</h1>
-              <p class="event-detail__subtitle">${event.subtitle}</p>
+            <div class="event-detail__kicker">
+              <span>${venue.icon}${venue.name}</span>
+              <span>${event.dayLabel} · ${event.time}</span>
             </div>
+            <h1 class="event-detail__title">${event.title}</h1>
+            <p class="event-detail__subtitle">${event.subtitle}</p>
           </div>
         </div>
 
-        <!-- Banner de Demostración Obligatorio -->
-        <div class="event-detail__disclaimer-box">
-          <div class="event-detail__disclaimer-icon">⚠️</div>
-          <div class="event-detail__disclaimer-text">
-            <strong>Evento ficticio para demostración</strong> • Todos los datos de este evento, aforo y beneficios son simulados con fines de presentación para los 4 locales del grupo (Señor Perú, Mood, Adriá y Play). No representa venta comercial ni reserva de entradas.
-          </div>
-        </div>
-
-        <!-- Contenedor de Contenido Principal -->
         <div class="event-detail__layout">
-          <!-- Columna Izquierda: Información, Beneficios y Local -->
           <div class="event-detail__main">
-            <!-- Tags de la Experiencia -->
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-md);">
-              ${(event.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-            </div>
-
-            <!-- Botones de Acción Rápida -->
-            <div class="event-actions-bar" style="display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-xl);">
-              <!-- Botón Guardar -->
+            <div class="event-actions-bar">
               <button 
                 type="button" 
-                class="btn btn--lg ${isSaved ? 'btn--primary' : 'btn--secondary'} btn-toggle-save" 
+                class="btn btn--lg ${isSaved ? 'btn--secondary' : 'btn--primary'} btn-toggle-save" 
                 id="btn-detail-save"
                 data-event-id="${event.id}"
-                style="flex: 1; min-width: 200px;"
               >
-                <span class="btn-heart-icon" style="font-size: 1.25rem;">${isSaved ? '❤️' : '🤍'}</span>
+                ${icon(isSaved ? 'check' : 'heart', { size: 18 })}
                 <span class="btn-save-text">${isSaved ? 'Guardado en Mi Club' : 'Guardar en Mi Club'}</span>
               </button>
-
-              <!-- Botón Seguir Local -->
               <button 
                 type="button" 
-                class="btn btn--lg ${isFollowed ? 'btn--secondary' : 'btn--secondary'} btn-toggle-follow" 
+                class="btn btn--lg btn--secondary btn-toggle-follow" 
                 id="btn-detail-follow"
                 data-venue-id="${venue.id}"
-                style="border-color: ${venue.accentColor}66; color: ${isFollowed ? 'var(--color-text-muted)' : venue.accentColor};"
+                ${isFollowed ? 'disabled' : ''}
               >
-                <span>${isFollowed ? '✓ Siguiendo a' : '+ Seguir a'}</span>
-                <strong>${venue.name}</strong>
+                ${isFollowed ? `${icon('check', { size: 16 })} Sigues a ${venue.name}` : `Seguir a ${venue.name}`}
               </button>
             </div>
 
-            <!-- Descripción de la Experiencia -->
-            <div style="margin-bottom: var(--space-xl);">
+            <section class="event-detail__block">
               <h2 class="event-detail__section-title">Sobre esta noche</h2>
               <p class="event-detail__description">${event.description}</p>
-            </div>
-
-            <!-- Video Teaser del Establecimiento si existe -->
-            ${event.video ? `
-              <div style="margin-bottom: var(--space-xl);">
-                <h3 class="event-detail__section-title" style="display: flex; align-items: center; gap: 8px;">
-                  <span>🎬</span> <span>Video Teaser del Establecimiento</span>
-                </h3>
-                <div style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-border); background: #000; box-shadow: var(--shadow-md);">
-                  <video 
-                    src="${event.video}" 
-                    controls 
-                    playsinline
-                    poster="${event.image}"
-                    style="width: 100%; max-height: 440px; object-fit: contain; display: block; background: #000;"
-                  ></video>
-                </div>
+              <div class="event-detail__tags">
+                ${(event.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
               </div>
-            ` : ''}
+            </section>
 
-            <!-- Enlace al Reel en Instagram si existe -->
-            ${event.reelUrl ? `
-              <div style="margin-bottom: var(--space-lg);">
-                <a 
-                  href="${event.reelUrl}" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  class="btn btn--outline btn--sm" 
-                  style="border-color: #E1306C; color: #FAF3E8; display: inline-flex; align-items: center; gap: 8px;"
-                >
-                  <span style="font-size: 1.1rem;">📸</span>
-                  <span>Ver reel oficial en Instagram (${venue.instagram || '@' + venue.id})</span>
-                  <span>↗</span>
-                </a>
-              </div>
-            ` : ''}
-
-            <!-- Tarjeta de Beneficio Exclusivo del Club -->
             ${event.benefit ? `
-              <div class="benefit-card">
-                <div class="benefit-card__badge">
-                  <span>🎁</span>
-                  <span>Beneficio Exclusivo del Club</span>
-                </div>
+              <section class="event-detail__block benefit-card">
+                <span class="section-title__eyebrow">Beneficio para miembros</span>
                 <h3 class="benefit-card__title">${event.benefit.title}</h3>
                 <p class="benefit-card__description">${event.benefit.description}</p>
-                
-                <div class="benefit-card__eligibility">
-                  <span>🎯</span>
-                  <div>
-                    <strong>Elegibilidad:</strong> ${event.benefit.eligibility}
-                  </div>
-                </div>
-
-                <div class="benefit-card__conditions">
-                  <strong>Condiciones:</strong> ${event.benefit.conditions}
-                </div>
-              </div>
+                <dl class="event-detail__facts">
+                  <div><dt>Quién</dt><dd>${event.benefit.eligibility}</dd></div>
+                  <div><dt>Condiciones</dt><dd>${event.benefit.conditions}</dd></div>
+                </dl>
+              </section>
             ` : ''}
 
-            <!-- Ficha del Local -->
-            <div class="event-detail__venue-info" style="border-left: 3px solid ${venue.accentColor};">
-              <div class="event-detail__venue-header">
-                <div class="event-detail__venue-icon">${venue.icon}</div>
-                <div>
-                  <h3 class="event-detail__venue-name">${venue.name}</h3>
-                  <p class="event-detail__venue-meta">${venue.tagline || venue.category}</p>
-                </div>
-              </div>
-              <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin-bottom: var(--space-md);">
-                ${venue.description}
-              </p>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-sm); font-size: var(--font-size-xs); color: var(--color-text-dim);">
-                <div>📍 <strong>Ubicación:</strong> ${venue.address}</div>
-                ${venue.instagram ? `<div>📸 <strong>Instagram:</strong> <a href="https://instagram.com/${venue.instagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" style="color: var(--color-accent); font-weight: 600;">${venue.instagram} ↗</a></div>` : ''}
-                <div>🕒 <strong>Horario:</strong> ${venue.schedule}</div>
-                <div>👤 <strong>Responsable:</strong> ${venue.manager}</div>
-                <div>👥 <strong>Aforo local:</strong> ${venue.capacity} personas</div>
-              </div>
-            </div>
+            ${event.video ? `
+              <section class="event-detail__block">
+                <h2 class="event-detail__section-title">El local en video</h2>
+                <video 
+                  class="event-detail__video"
+                  src="${event.video}" 
+                  controls 
+                  playsinline
+                  poster="${event.image}"
+                ></video>
+              </section>
+            ` : ''}
+
+            <section class="event-detail__block event-detail__venue-info">
+              <span class="section-title__eyebrow">El local</span>
+              <h3 class="event-detail__venue-name">${venue.name}</h3>
+              <p class="event-detail__venue-meta">${venue.description}</p>
+              <dl class="event-detail__facts">
+                <div><dt>Dirección</dt><dd>${venue.address}</dd></div>
+                <div><dt>Horario</dt><dd>${venue.schedule}</dd></div>
+                <div><dt>Aforo</dt><dd>${venue.capacity} personas</dd></div>
+                ${venue.instagram ? `<div><dt>Instagram</dt><dd><a href="${event.reelUrl || venue.reelUrl || `https://instagram.com/${venue.instagram.replace('@', '')}`}" target="_blank" rel="noopener noreferrer">${venue.instagram} ${icon('external', { size: 13 })}</a></dd></div>` : ''}
+              </dl>
+            </section>
           </div>
 
-          <!-- Columna Derecha: Pase Ilustrativo y Métricas de Demostración -->
-          <div class="event-detail__sidebar">
-            <!-- PASE ILUSTRATIVO (Ticket-like design con marca de agua obligatoria) -->
-            <div class="pass-card" style="border-color: ${venue.accentColor}88;">
-              <!-- Marca de agua prominente -->
-              <div style="background: rgba(212, 168, 87, 0.15); border: 1px dashed var(--color-accent); border-radius: var(--radius-sm); padding: 4px 8px; text-align: center; margin-bottom: var(--space-md); font-family: var(--font-display); font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.12em; color: var(--color-accent); text-transform: uppercase;">
-                PASE ILUSTRATIVO — DEMO
-              </div>
-
+          <aside class="event-detail__sidebar">
+            <div class="pass-card">
               <div class="pass-card__header">
-                <span class="pass-card__brand">OPERIUM CLUB</span>
-                <span class="pass-card__type" style="background-color: ${venue.accentColor}22; color: ${venue.accentColor}; border-color: ${venue.accentColor}44;">
-                  ${venue.icon} ${venue.name}
-                </span>
+                <span class="pass-card__brand">Operium Club</span>
+                <span class="pass-card__type">Pase de miembro</span>
               </div>
-
-              <!-- Información del Miembro -->
               <div class="pass-card__member-info">
-                <div style="font-size: var(--font-size-2xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wider); color: var(--color-text-dim);">
-                  Titular del Pase:
-                </div>
                 <div class="pass-card__member-name">${memberName}</div>
-                <div class="pass-card__member-id">
-                  <span>ID: <code>${memberId}</code></span>
-                  <span style="margin: 0 4px;">•</span>
-                  <span style="text-transform: capitalize;">Perfil: ${memberSegment}</span>
-                </div>
+                <div class="pass-card__member-id">${memberId} · ${memberSegment}</div>
               </div>
-
-              <!-- Detalle del Evento en el Pase -->
-              <div style="padding: var(--space-sm) 0; border-top: 1px solid var(--color-border-subtle); border-bottom: 1px solid var(--color-border-subtle); margin-bottom: var(--space-md);">
-                <div style="font-family: var(--font-display); font-weight: 700; font-size: var(--font-size-md); color: var(--color-text); margin-bottom: 2px;">
-                  ${event.title}
-                </div>
-                <div style="font-size: var(--font-size-xs); color: var(--color-accent);">
-                  📅 ${event.dayLabel} · 🕒 ${event.time} a ${event.endTime || 'cierre'}
-                </div>
+              <div class="pass-card__event">
+                <div class="pass-card__event-title">${event.title}</div>
+                <div class="pass-card__event-meta">${venue.name} · ${event.dayLabel} · ${event.time}–${event.endTime || 'cierre'}</div>
               </div>
-
-              <!-- QR Simulado Estilizado -->
-              <div class="pass-card__qr-simulation" title="Código QR Ilustrativo para Demostración">
+              <div class="pass-card__qr-simulation" title="Código ilustrativo">
                 <svg viewBox="0 0 100 100" width="100%" height="100%" shape-rendering="crispEdges">
                   <rect width="100" height="100" fill="#FAF3E8" />
                   <!-- QR Finder Pattern Top-Left -->
@@ -285,42 +186,23 @@ export default function EventDetail(params = {}) {
                   <rect x="74" y="78" width="14" height="12" fill="#0D0D0D" />
                 </svg>
               </div>
-
-              <!-- Microcopy de Advertencia del Pase -->
               <div class="pass-card__disclaimer">
-                No es una entrada comercial ni garantiza acceso en puerta. Demostración de credencial digital del club.
+                Credencial ilustrativa. No es una entrada ni garantiza acceso.
               </div>
             </div>
 
-            <!-- Métricas y Reglas de Demostración -->
-            <div class="card card--accent" style="margin-bottom: var(--space-xl);">
-              <h4 style="font-family: var(--font-display); font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: var(--letter-spacing-wider); color: var(--color-accent); margin-bottom: var(--space-md);">
-                Métricas del Evento (DEMO)
-              </h4>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-md);">
-                <div class="metric-card" style="padding: var(--space-md);">
-                  <span class="metric-card__label">Interés previo</span>
-                  <span class="metric-card__value" id="detail-saved-count" style="color: var(--color-accent);">
-                    ${event.savedCount || 0}
-                  </span>
-                  <span class="metric-card__helper">Guardados en club</span>
-                </div>
-
-                <div class="metric-card" style="padding: var(--space-md);">
-                  <span class="metric-card__label">Aforo proyectado</span>
-                  <span class="metric-card__value">
-                    ${event.capacity || 0}
-                  </span>
-                  <span class="metric-card__helper">Capacidad máxima</span>
-                </div>
+            <div class="event-detail__stats">
+              <div>
+                <span class="metric-card__label">Guardados</span>
+                <span class="metric-card__value" id="detail-saved-count">${event.savedCount || 0}</span>
               </div>
-
-              <div style="background-color: var(--color-surface-elevated); border-radius: var(--radius-md); padding: var(--space-sm); font-size: var(--font-size-2xs); color: var(--color-text-dim); line-height: var(--line-height-relaxed);">
-                <strong>Regla de negocio:</strong> Guardar este evento incrementa el interés previo de la audiencia, pero no contabiliza como asistencia en puerta ni garantiza recaudación en caja sin validación presencial.
+              <div>
+                <span class="metric-card__label">Aforo</span>
+                <span class="metric-card__value">${event.capacity || 0}</span>
               </div>
+              <p>Guardar suma interés. La asistencia solo cuenta tras el check-in en puerta.</p>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     `;

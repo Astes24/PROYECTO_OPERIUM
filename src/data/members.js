@@ -55,6 +55,20 @@ function generateMembers() {
       }
     }
 
+    // Locales que sigue: los recurrentes siguen todos los que autorizaron;
+    // los nuevos, uno (y Play a menudo, por ser el más masivo); los inactivos, ninguno.
+    const venueIds = ['senor-peru', 'mood', 'adria', 'play'];
+    const following = segment === 'recurrente'
+      ? venueIds.filter(v => consentByVenue[v])
+      : segment === 'nuevo'
+        ? [...new Set([venueIds[i % 4], ...(i % 3 === 0 ? ['play'] : [])])].filter(v => consentByVenue[v])
+        : [];
+
+    // Algunos recurrentes ya guardaron la primera fecha de los locales que siguen.
+    // Forman parte de los totales savedCount de events.js (no se suman de nuevo).
+    const FIRST_EVENT = { 'senor-peru': 'ev-sp-01', mood: 'ev-mood-01', adria: 'ev-adria-01', play: 'ev-play-01' };
+    const savedEvents = segment === 'recurrente' && i % 2 === 0 ? following.map(v => FIRST_EVENT[v]) : [];
+
     members.push({
       id: `member-${String(i + 1).padStart(3, '0')}`,
       name: `${firstName} ${lastInit}`,
@@ -67,8 +81,8 @@ function generateMembers() {
         byVenue: consentByVenue,
       },
       interactions,
-      savedEvents: [],
-      following: [],
+      savedEvents,
+      following,
       checkins: [],
     });
   }
