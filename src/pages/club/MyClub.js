@@ -2,9 +2,14 @@
 // Perfil de miembro, eventos guardados, locales seguidos e historial de actividad
 // Diferenciación clara: interés (guardado) vs asistencia verificada (check-in)
 
-import { getState, unsaveEvent, setCurrentMember, subscribe } from '../../store.js';
+import { getState, unsaveEvent, setCurrentMember, subscribe, memberPoints, redeemReward, setLoyaltyConsent } from '../../store.js';
 import { getVenue } from '../../data/venues.js';
+import { REWARDS, POINTS_VALID_MONTHS, getReward } from '../../data/loyalty.js';
 import { icon } from '../../icons.js';
+import { qrSvg } from '../../qr.js';
+import { fmtDate } from '../../metrics.js';
+
+const fmt = (n) => Number(n || 0).toLocaleString('es-PE');
 
 export default function MyClub() {
   function formatSpanishDate(dateStr) {
@@ -101,11 +106,42 @@ export default function MyClub() {
       });
     });
 
+    // 4. Consumos con DNI que llegaron de caja, y canjes
+    (member.purchases || []).forEach(p => {
+      const ven = venues.find(v => v.id === p.venueId) || getVenue(p.venueId);
+      activityTimeline.push({
+        type: 'purchase',
+        title: `Consumo en ${ven ? ven.name : p.venueId}`,
+        subtitle: `Boleta ${p.receipt} · S/ ${fmt(p.amount)}`,
+        date: p.date,
+        venue: null,
+        icon: 'card',
+        badgeClass: 'badge--accent',
+        badgeText: `+${fmt(p.points)} pts`,
+      });
+    });
+    (member.redemptions || []).forEach(r => {
+      activityTimeline.push({
+        type: 'redeem',
+        title: getReward(r.rewardId)?.title || r.rewardId,
+        subtitle: r.status === 'pendiente' ? `Canje ${r.code} · pendiente en barra` : `Canje ${r.code} · usado`,
+        date: r.date,
+        venue: null,
+        icon: 'gift',
+        badgeClass: '',
+        badgeText: `−${fmt(r.points)} pts`,
+      });
+    });
+
     // Ordenar cronológicamente descendente
     activityTimeline.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     // Garantiza que el miembro activo aparezca en el selector aunque no esté entre los 5 primeros
     const m0 = (seg) => (member.segment === seg && members.filter(m => m.segment === seg).slice(0, 5).every(m => m.id !== member.id)) ? [member] : [];
+
+    const points = memberPoints(member);
+    const nextReward = REWARDS.find(r => r.points > points);
+    const pending = (member.redemptions || []).filter(r => r.status === 'pendiente');
 
     const initials = (member.name || 'Miembro')
       .split(' ')
@@ -146,10 +182,65 @@ export default function MyClub() {
           </div>
           <dl class="profile-card__stats">
             <div><dt>Guardados</dt><dd>${savedEventsList.length}</dd></div>
-            <div><dt>Locales</dt><dd>${followedVenuesList.length}</dd></div>
+            <div><dt>Puntos</dt><dd>${member.consent.loyalty ? fmt(points) : '—'}</dd></div>
             <div><dt>Check-ins</dt><dd>${(member.checkins || []).length}</dd></div>
           </dl>
         </header>
+
+        <section class="profile-block points-block">
+          <div class="section-header">
+            <div class="section-title">
+              <h2 class="section-title__heading">Tus puntos</h2>
+            </div>
+            <p class="discover-note">Valen en Señor Perú, Mood, Adriá y Play</p>
+          </div>
+
+          ${!member.consent.loyalty ? `
+            <div class="points-card points-card--off">
+              <div>
+                <h3 class="points-card__title">Suma puntos con cada consumo</h3>
+                <p>Da tu DNI al pagar y la boleta suma 1 punto por cada S/ 1. Solo usamos tus boletas para darte puntos, y puedes desactivarlo cuando quieras.</p>
+              </div>
+              <button type="button" class="btn btn--primary btn--md" id="btn-loyalty-on">Activar mis puntos</button>
+            </div>
+          ` : `
+            <div class="points-card">
+              <div class="points-card__balance">
+                <span class="points-card__value">${fmt(points)}</span>
+                <span class="points-card__unit">puntos</span>
+              </div>
+              <div class="points-card__next">
+                ${nextReward ? `
+                  <span>Te faltan <strong>${fmt(nextReward.points - points)}</strong> para “${nextReward.title}”</span>
+                  <span class="points-card__track"><span style="width: ${Math.min(100, Math.round((points / nextReward.points) * 100))}%;"></span></span>
+                ` : '<span>Puedes canjear cualquier recompensa.</span>'}
+                <small>DNI ••••${member.dniLast4} vinculado a tus boletas · vencen a los ${POINTS_VALID_MONTHS} meses</small>
+              </div>
+            </div>
+
+            ${pending.map(r => `
+              <div class="redeem-ticket">
+                ${qrSvg(r.code, { size: 104, label: `Código de canje ${r.code}` })}
+                <div>
+                  <span class="redeem-ticket__label">Canje listo · muéstralo en barra</span>
+                  <strong>${getReward(r.rewardId)?.title || ''}</strong>
+                  <code>${r.code}</code>
+                </div>
+              </div>
+            `).join('')}
+
+            <ul class="rewards-list">
+              ${REWARDS.map(rw => `
+                <li class="rewards-list__item ${points >= rw.points ? 'is-available' : ''}">
+                  <span class="rewards-list__pts">${fmt(rw.points)}</span>
+                  <span class="rewards-list__body"><strong>${rw.title}</strong><small>${rw.desc}</small></span>
+                  <button type="button" class="btn btn--sm ${points >= rw.points ? 'btn--primary' : 'btn--secondary'}" data-redeem="${rw.id}" ${points >= rw.points ? '' : 'disabled'}>Canjear</button>
+                </li>
+              `).join('')}
+            </ul>
+            <button type="button" class="points-block__off" id="btn-loyalty-off">Desactivar mis puntos</button>
+          `}
+        </section>
 
         <section class="profile-block">
           <div class="section-header">
@@ -184,7 +275,7 @@ export default function MyClub() {
                       <div class="saved-item__title"><a href="#/event/${event.id}">${event.title}</a></div>
                     </div>
                     <div class="saved-item__actions">
-                      <a href="#/event/${event.id}" class="btn btn--sm btn--secondary">Ver pase</a>
+                      <a href="#/event/${event.id}" class="btn btn--sm btn--secondary">${icon('ticket', { size: 14 })} Pase QR</a>
                       <button 
                         type="button" 
                         class="btn btn--sm btn--ghost btn-unsave-event" 
@@ -228,7 +319,7 @@ export default function MyClub() {
             <div class="section-title">
               <h2 class="section-title__heading">Actividad</h2>
             </div>
-            <p class="discover-note">El interés se registra al guardar. La asistencia, solo con check-in en puerta.</p>
+            <p class="discover-note">El interés se registra al guardar; la asistencia, al escanear tu pase en la puerta.</p>
           </div>
 
           ${activityTimeline.length === 0 ? `
@@ -244,7 +335,7 @@ export default function MyClub() {
                   </div>
                   <div class="activity-list__meta">
                     <span class="badge ${item.badgeClass}">${item.badgeText}</span>
-                    <time>${item.date}</time>
+                    <time datetime="${item.date}">${fmtDate(item.date)}</time>
                   </div>
                 </li>
               `).join('')}
@@ -269,7 +360,18 @@ export default function MyClub() {
         });
       });
 
-      // 2. Switcher de miembro en tiempo de demo
+      // 2. Puntos: activar / desactivar y canjear
+      document.getElementById('btn-loyalty-on')?.addEventListener('click', () => setLoyaltyConsent(getState().currentMemberId, true));
+      document.getElementById('btn-loyalty-off')?.addEventListener('click', () => {
+        if (window.confirm('¿Desactivar tus puntos? Tus próximas boletas no se vincularán a tu perfil.')) {
+          setLoyaltyConsent(getState().currentMemberId, false);
+        }
+      });
+      document.querySelectorAll('[data-redeem]').forEach(btn => {
+        btn.addEventListener('click', () => redeemReward(getState().currentMemberId, btn.dataset.redeem));
+      });
+
+      // 3. Switcher de miembro en tiempo de demo
       const switcher = document.getElementById('member-switcher');
       if (switcher) {
         switcher.addEventListener('change', (e) => {

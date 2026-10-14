@@ -1,13 +1,25 @@
 // Operium Club — Métricas derivadas del estado y del historial
 // Todo se calcula por contexto: 'all' (todo el grupo) o el id de un local.
-// Las frases de conclusión salen de estos mismos números: nunca se inventan.
 
-import { getState } from './store.js';
+import { getState, memberPoints } from './store.js';
 import { VENUES } from './data/venues.js';
-import { VENUE_HISTORY, PROMOTER_HISTORY, DEMO_TODAY, CURRENT_WEEKEND } from './data/history.js';
+import { VENUE_HISTORY, PROMOTER_HISTORY, DEMO_TODAY, CURRENT_WEEKEND, promoterPoints } from './data/history.js';
+import { REFERRAL_WINDOW_DAYS } from './data/loyalty.js';
+
+export { memberPoints, promoterPoints };
 
 export const pct = (part, total) => (total > 0 ? Math.round((part / total) * 100) : 0);
 export const fmt = (n) => Number(n || 0).toLocaleString('es-PE');
+export const soles = (n) => `S/ ${fmt(Math.round(n || 0))}`;
+// Fecha legible: "sáb 10 oct"
+const WEEKDAYS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+export function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(`${iso}T12:00:00`);
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+const daysSince = (date) => Math.round((new Date(DEMO_TODAY) - new Date(date)) / 86400000);
 
 export function ctxVenues(ctx) {
   return ctx === 'all' ? VENUES : VENUES.filter(v => v.id === ctx);
@@ -42,6 +54,8 @@ export function currentWeekend(ctx) {
   return {
     label: CURRENT_WEEKEND.label,
     events,
+    receipts: sum(events, 'identifiedReceipts'),
+    spend: sum(events, 'identifiedSpend'),
     saved: sum(events, 'savedCount'),
     checkins: sum(events, 'checkinCount'),
     capacity: sum(events, 'capacity'),
@@ -83,6 +97,8 @@ export function history(ctx) {
       conversion: pct(total('savedAttended'), saved),
       occupancy: pct(checkins, capacity),
       bySource: { promotor: source('promotor'), campana: source('campana'), directo: source('directo') },
+      receipts: total('receipts'),
+      spend: total('spend'),
     };
   });
 }
@@ -116,6 +132,37 @@ export function promoterStats(promoter) {
     visitToAttend: pct(total('attended'), total('visits')),
     shareOfVenue: venueLast ? pct(last.attended, venueLast.checkins) : 0,
     history: hist,
+    points4: total('points'),
+    spend4: total('spend'),
+    // Consumo con DNI por cada referido que entró (últimas 4 semanas)
+    spendPerReferral: total('attended') ? Math.round(total('spend') / total('attended')) : 0,
+    live: promoterLive(promoter),
+  };
+}
+
+// Referidos activos: se registraron con su enlace hace 90 días o menos
+export function promoterReferrals(promoter) {
+  return getState().members.filter(m => m.referredBy === promoter.id && daysSince(m.registeredDate) <= REFERRAL_WINDOW_DAYS);
+}
+
+// Este fin de semana, en vivo: ingresos con QR de sus referidos y sus boletas con DNI
+export function promoterLive(promoter) {
+  const referrals = promoterReferrals(promoter);
+  const entries = referrals.flatMap(m => m.checkins.filter(c => CURRENT_DATES.includes(c.date)).map(c => ({ m, c })));
+  const purchases = referrals.flatMap(m => m.purchases.filter(p => CURRENT_DATES.includes(p.date)).map(p => ({ m, p })));
+  const base = promoter.fridayBase || { attended: 0, spend: 0 };
+  const attended = base.attended + entries.length;
+  const spend = base.spend + purchases.reduce((acc, { p }) => acc + p.amount, 0);
+  return {
+    referrals: referrals.length,
+    attended,
+    spend,
+    points: promoterPoints(attended, spend),
+    // Lo último con nombre, para la tarjeta del promotor
+    feed: [
+      ...entries.map(({ m, c }) => ({ kind: 'entry', m, date: c.date, time: c.time || '' })),
+      ...purchases.map(({ m, p }) => ({ kind: 'purchase', m, date: p.date, amount: p.amount })),
+    ].reverse(),
   };
 }
 
@@ -124,54 +171,23 @@ export function ctxPromoters(ctx) {
   return getState().promoters.filter(p => ids.includes(p.venue));
 }
 
-// ========================
-// Conclusiones (una frase por pantalla)
-// ========================
-
-export function summaryInsight(ctx) {
-  if (ctx === 'all') {
-    const rows = VENUES.map(v => ({ v, now: currentWeekend(v.id), last: lastWeekend(v.id) }));
-    const byInterest = [...rows].sort((a, b) => b.now.saved - a.now.saved)[0];
-    const byConversion = [...rows].sort((a, b) => b.last.conversion - a.last.conversion)[0];
-    if (byInterest.v.id === byConversion.v.id) {
-      return `${byInterest.v.name} lidera en interés (${fmt(byInterest.now.saved)} guardados) y en conversión (${byConversion.last.conversion}% el fin de semana pasado).`;
-    }
-    return `${byInterest.v.name} tiene más interés este fin de semana (${fmt(byInterest.now.saved)} guardados), pero ${byConversion.v.name} convierte mejor: llegó el ${byConversion.last.conversion}% de quienes guardaron, frente al ${byInterest.last.conversion}% de ${byInterest.v.name}.`;
-  }
-  const name = ctxLabel(ctx);
-  const now = currentWeekend(ctx);
-  const last = lastWeekend(ctx);
-  const change = pct(now.saved - last.saved, last.saved);
-  const trend = change >= 0 ? `${change}% más` : `${Math.abs(change)}% menos`;
-  if (now.started) {
-    return `${name} ya celebró ${now.finishedCount === 1 ? 'una noche' : `${now.finishedCount} noches`}: llegó el ${now.conversion}% de quienes guardaron (el fin de semana pasado, ${last.conversion}%).`;
-  }
-  return `${name} lleva ${fmt(now.saved)} guardados para este fin de semana, ${trend} que el anterior (${fmt(last.saved)}). La última vez llegó el ${last.conversion}% de quienes guardaron.`;
-}
-
-export function eventsInsight(ctx) {
-  const now = currentWeekend(ctx);
-  const finished = now.events.filter(e => e.finished && e.savedCount);
-  if (finished.length) {
-    const best = [...finished].sort((a, b) => b.savedAttended / b.savedCount - a.savedAttended / a.savedCount)[0];
-    return `${best.title} fue la noche que mejor convirtió: llegó el ${pct(best.savedAttended, best.savedCount)}% de quienes la guardaron.`;
-  }
-  const top = [...now.events].sort((a, b) => b.savedCount / b.capacity - a.savedCount / a.capacity)[0];
-  if (!top) return '';
-  return `${top.title} es la fecha más esperada: ${fmt(top.savedCount)} guardados, el ${pct(top.savedCount, top.capacity)}% de su aforo antes de abrir.`;
-}
-
-export function originInsight(ctx) {
-  const promoters = ctxPromoters(ctx).map(p => ({ p, s: promoterStats(p) }));
-  if (!promoters.length) return '';
-  if (ctx !== 'all') {
-    const { p, s } = promoters[0];
-    return `${p.name} trajo ${fmt(s.last.attended)} de los ${fmt(lastWeekend(ctx).checkins)} asistentes de ${ctxLabel(ctx)} el fin de semana pasado (${s.shareOfVenue}%).`;
-  }
-  const byVolume = [...promoters].sort((a, b) => b.s.last.attended - a.s.last.attended)[0];
-  const byRate = [...promoters].sort((a, b) => b.s.visitToAttend - a.s.visitToAttend)[0];
-  if (byVolume.p.id === byRate.p.id) {
-    return `${byVolume.p.name} es el promotor que más público trae y el que mejor convierte sus visitas (${byRate.s.visitToAttend}%).`;
-  }
-  return `${byVolume.p.name} trae más público (${fmt(byVolume.s.last.attended)} asistentes el fin de semana pasado), pero ${byRate.p.name} convierte mejor sus visitas: ${byRate.s.visitToAttend}% frente a ${byVolume.s.visitToAttend}%.`;
+// — Clientes con puntos —
+// En un local se ve solo lo consumido en ese local; los puntos valen en los cuatro.
+export function clientRows(ctx) {
+  const ids = ctxVenues(ctx).map(v => v.id);
+  return getState().members
+    .map(m => {
+      const purchases = m.purchases.filter(p => ids.includes(p.venueId));
+      const last = purchases.at(-1);
+      return {
+        m,
+        nights: new Set(purchases.map(p => p.date)).size,
+        spend: purchases.reduce((acc, p) => acc + p.amount, 0),
+        points: memberPoints(m),
+        lastDate: last?.date || '',
+        lastVenue: last ? VENUES.find(v => v.id === last.venueId) : null,
+      };
+    })
+    .filter(r => r.spend > 0)
+    .sort((a, b) => b.lastDate.localeCompare(a.lastDate) || b.spend - a.spend);
 }

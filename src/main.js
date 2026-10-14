@@ -19,11 +19,13 @@ import EventDetail from './pages/club/EventDetail.js';
 import MyClub from './pages/club/MyClub.js';
 import Summary from './pages/panel/Summary.js';
 import Events from './pages/panel/Events.js';
-import Origin from './pages/panel/Origin.js';
+import Promoters from './pages/panel/Promoters.js';
+import Clients from './pages/panel/Clients.js';
 import Marketing from './pages/panel/Marketing.js';
 import Door from './pages/panel/Door.js';
 import DemoControl from './pages/demo/DemoControl.js';
 import { VENUES } from './data/venues.js';
+import { simReceipt, simPromoterVisit, simFriday, hasLastVisit, fridayDone } from './sim.js';
 
 // Import styles
 // Display condensada para la app del público (self-hosted vía Fontsource)
@@ -42,16 +44,19 @@ route('/event/:id', (params) => EventDetail(params));
 route('/myclub', MyClub);
 route('/panel/resumen', Summary);
 route('/panel/eventos', Events);
-route('/panel/origen', Origin);
-route('/panel/publico', Marketing);
+route('/panel/promotores', Promoters);
+route('/panel/clientes', Clients);
+route('/panel/campanas', Marketing);
 route('/panel/puerta', Door);
 route('/demo', DemoControl);
 
 // Rutas de la versión anterior del panel
 alias('/panel/venue', '/panel/resumen');
 alias('/panel/group', '/panel/resumen');
-alias('/panel/promoters', '/panel/origen');
-alias('/panel/marketing', '/panel/publico');
+alias('/panel/promoters', '/panel/promotores');
+alias('/panel/origen', '/panel/promotores');
+alias('/panel/marketing', '/panel/campanas');
+alias('/panel/publico', '/panel/campanas');
 alias('/panel/events', '/panel/eventos');
 
 // Recorrido guiado. En pantalla solo la acción a realizar; la frase para el
@@ -62,38 +67,47 @@ const TOUR_STEPS = [
     title: 'Descubrir',
     route: '/discover',
     venueId: null,
-    desc: 'Pulsa “Guardar” en un evento de Mood. Queda en el perfil del miembro como interés, no como asistencia ni venta.',
-    phrase: 'No venimos a reemplazar su facturación ni su control de entradas. Queremos mostrar cómo podrían conectar público, promotores y marketing con decisiones útiles para sus locales.',
-  },
-  {
-    title: 'Origen',
-    route: '/panel/origen',
-    venueId: 'mood',
-    desc: 'En la tarjeta de Ricardo V., pulsa “Simular visita” y después “Repetir la misma”: la segunda no cuenta.',
-    phrase: 'Cada promotor tiene su propio enlace. Medimos cuánto público trae de verdad, sin duplicar comisiones.',
-  },
-  {
-    title: 'Público',
-    route: '/panel/publico',
-    venueId: 'mood',
-    module: 'publico',
-    desc: 'Mira cuántos recurrentes quedan fuera por falta de permiso y pulsa “Envío simulado”.',
-    phrase: 'Verificamos canal y autorización para cada local. Nadie recibe invitaciones sin consentimiento previo.',
+    desc: 'Pulsa “Guardar” en “Viernes de Mood” y abre su ficha: el pase del miembro ya tiene su QR.',
+    phrase: 'No venimos a reemplazar su caja ni su facturación. Queremos conectar público, promotores y consumo con decisiones útiles para sus locales.',
   },
   {
     title: 'Puerta',
     route: '/panel/puerta',
     venueId: 'mood',
     module: 'puerta',
-    desc: 'Registra un ingreso desde el teléfono y repítelo con la misma persona: el segundo se rechaza.',
-    phrase: 'Un guardado no es una venta. Primero vemos interés; después, asistencia validada una sola vez.',
+    desc: 'Pulsa “Escanear”: entra quien guardó el evento. Después “Volver a escanear el mismo pase”: se rechaza.',
+    phrase: 'Como en el cine: un QR por persona y noche. Cada ingreso queda validado una sola vez y con nombre propio.',
   },
   {
-    title: 'Eventos',
-    route: '/panel/eventos',
+    title: 'Clientes',
+    route: '/panel/clientes',
     venueId: 'mood',
-    desc: 'Antes de abrir solo hay interés; cuando cierra la noche aparecen asistencia y conversión. Las ventas nunca se estiman.',
-    phrase: 'Una venta solo se mostrará cuando podamos enlazarla a una fuente confiable de POS o caja. Nunca por inferencia.',
+    module: 'clientes',
+    desc: 'Abre “Simular” (arriba) → “Boleta de un cliente con puntos”: la boleta con DNI de quien entró suma sus puntos. Prueba también la de un cliente sin puntos.',
+    phrase: 'Solo leemos las boletas que ya emite su caja. Si el cliente lo autorizó, su consumo suma puntos que puede usar en cualquiera de sus cuatro locales.',
+  },
+  {
+    title: 'Mi Club',
+    route: '/myclub',
+    venueId: null,
+    module: 'clientes',
+    desc: 'Así lo ve el cliente: sus puntos, lo que le falta para la siguiente recompensa y el canje desde el teléfono.',
+    phrase: 'El cliente tiene un motivo para volver, y para volver a cualquiera de sus marcas, no solo a una.',
+  },
+  {
+    title: 'Promotores',
+    route: '/panel/promotores',
+    venueId: 'mood',
+    desc: 'Ricardo V. suma puntos por su referido: por entrar con su QR y por lo que consumió con su DNI.',
+    phrase: 'Premiamos al promotor que trae gente que entra y consume, no al que reparte más enlaces. Sin QR no hay puntos.',
+  },
+  {
+    title: 'Campañas',
+    route: '/panel/campanas',
+    venueId: 'mood',
+    module: 'campanas',
+    desc: 'Mira cuántos recurrentes quedan fuera por falta de permiso y pulsa “Envío simulado”.',
+    phrase: 'Verificamos canal y autorización para cada local. Nadie recibe invitaciones sin consentimiento previo.',
   },
   {
     title: 'Resumen',
@@ -102,6 +116,16 @@ const TOUR_STEPS = [
     desc: 'Las cuatro marcas en una sola vista, de lo general al detalle, sin cruzar datos personales.',
     phrase: '¿Qué parte de esta experiencia ya resuelve su sistema, qué parte les falta y cuál valdría la pena comprobar en un piloto pequeño?',
   },
+];
+
+// Secciones del negocio (barra lateral en escritorio, barra inferior en móvil)
+const PANEL_NAV = [
+  { route: '/panel/resumen', label: 'Resumen', icon: 'chart' },
+  { route: '/panel/eventos', label: 'Eventos', icon: 'calendar' },
+  { route: '/panel/puerta', label: 'Puerta', icon: 'ticket', module: 'puerta' },
+  { route: '/panel/clientes', label: 'Clientes', icon: 'gift', module: 'clientes' },
+  { route: '/panel/promotores', label: 'Promotores', icon: 'megaphone' },
+  { route: '/panel/campanas', label: 'Campañas', icon: 'target', module: 'campanas' },
 ];
 
 const activeSteps = () => {
@@ -138,6 +162,12 @@ function buildAppShell() {
           <a href="#/discover" class="view-switch__opt" data-world="club">${icon('phone', { size: 15 })}<span>Público</span></a>
           <a href="#/panel/resumen" class="view-switch__opt" data-world="panel">${icon('chart', { size: 15 })}<span>Negocio</span></a>
         </div>
+        <div class="sim-menu" id="sim-menu" hidden>
+          <button type="button" class="app-header__sim" id="btn-header-sim" title="Simular" aria-haspopup="true" aria-expanded="false" aria-controls="sim-menu-panel">
+            ${icon('zap', { size: 15 })}<span>Simular</span>
+          </button>
+          <div class="sim-menu__panel" id="sim-menu-panel" hidden></div>
+        </div>
         <button type="button" class="btn btn--sm btn--primary" id="btn-header-tour" aria-label="Recorrido guiado">
           ${icon('map', { size: 15 })}<span class="app-header__tour-label">Recorrido</span>
         </button>
@@ -165,22 +195,30 @@ function buildAppShell() {
           ${icon('calendar', { size: 17 })}
           <span>Eventos</span>
         </a>
-        <a href="#/panel/origen" class="panel-sidebar__item" data-route="/panel/origen">
-          ${icon('megaphone', { size: 17 })}
-          <span>Origen</span>
-        </a>
-        <a href="#/panel/publico" class="panel-sidebar__item" data-route="/panel/publico" data-module="publico">
-          ${icon('target', { size: 17 })}
-          <span>Público</span>
-        </a>
         <a href="#/panel/puerta" class="panel-sidebar__item" data-route="/panel/puerta" data-module="puerta">
           ${icon('ticket', { size: 17 })}
           <span>Puerta</span>
+        </a>
+        <a href="#/panel/clientes" class="panel-sidebar__item" data-route="/panel/clientes" data-module="clientes">
+          ${icon('gift', { size: 17 })}
+          <span>Clientes</span>
+        </a>
+        <a href="#/panel/promotores" class="panel-sidebar__item" data-route="/panel/promotores">
+          ${icon('megaphone', { size: 17 })}
+          <span>Promotores</span>
+        </a>
+        <a href="#/panel/campanas" class="panel-sidebar__item" data-route="/panel/campanas" data-module="campanas">
+          ${icon('target', { size: 17 })}
+          <span>Campañas</span>
         </a>
       </nav>
     </aside>
 
     <main class="app-main" id="page-content"></main>
+
+    <!-- Barra inferior del negocio (móvil) -->
+    <nav class="panel-tabbar" id="panel-tabbar" aria-label="Secciones del negocio"></nav>
+    <div class="panel-more" id="panel-more" hidden></div>
 
     <!-- Barra inferior de la app del público (móvil) -->
     <nav class="club-nav" id="club-nav" aria-label="App del público">
@@ -204,6 +242,111 @@ function buildAppShell() {
     startTour();
     navigate('/discover');
   });
+
+  setupSimMenu();
+  setupPanelTabbar();
+}
+
+// — Menú "Simular": todo lo que en producción llegaría de fuera —
+let simResult = null;
+
+function renderSimMenu() {
+  const panel = document.getElementById('sim-menu-panel');
+  if (!panel) return;
+  const { currentVenueId: ctx } = getState();
+  const where = VENUES.find(v => v.id === ctx)?.name || 'todo el grupo';
+  const item = (action, label, hint, disabled = false) => `
+    <button type="button" class="sim-menu__item" data-sim-action="${action}" ${disabled ? 'disabled' : ''}>
+      <strong>${label}</strong><small>${hint}</small>
+    </button>`;
+  panel.innerHTML = `
+    <p class="sim-menu__head">Simulaciones de la demo · ${where}</p>
+    <div class="sim-menu__group">
+      <span class="sim-menu__label">Caja</span>
+      ${item('receipt', 'Boleta de un cliente con puntos', 'Llega con DNI y suma puntos')}
+      ${item('receipt-off', 'Boleta de un cliente sin puntos', 'No se vincula a nadie')}
+    </div>
+    <div class="sim-menu__group">
+      <span class="sim-menu__label">Promotores</span>
+      ${item('visit', 'Visita a un enlace', 'Alguien abre el enlace de un promotor')}
+      ${item('visit-repeat', 'Repetir la última visita', 'No se atribuye dos veces', !hasLastVisit())}
+    </div>
+    <div class="sim-menu__group">
+      <span class="sim-menu__label">Noche</span>
+      ${item('friday', 'Cerrar la noche del viernes', fridayDone() ? 'Ya cerrada' : 'Asistencia, conversión y consumo', fridayDone())}
+    </div>
+    ${simResult ? `<p class="sim-menu__result sim-menu__result--${simResult.kind}" aria-live="polite">${simResult.text}</p>` : ''}
+  `;
+}
+
+function setupSimMenu() {
+  const wrap = document.getElementById('sim-menu');
+  const btn = document.getElementById('btn-header-sim');
+  const panel = document.getElementById('sim-menu-panel');
+  if (!wrap || !btn || !panel) return;
+
+  const setOpen = (open) => {
+    if (open) { simResult = null; renderSimMenu(); }
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  btn.addEventListener('click', () => setOpen(panel.hidden));
+  // composedPath: el contenido del menú se redibuja al pulsar una acción y el
+  // elemento pulsado ya no está en el documento cuando llega este evento
+  document.addEventListener('click', (e) => { if (!e.composedPath().includes(wrap)) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  window.addEventListener('hashchange', () => setOpen(false));
+
+  panel.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-sim-action]')?.dataset.simAction;
+    if (!action) return;
+    simResult = {
+      receipt: () => simReceipt(true),
+      'receipt-off': () => simReceipt(false),
+      visit: () => simPromoterVisit(false),
+      'visit-repeat': () => simPromoterVisit(true),
+      friday: () => simFriday(),
+    }[action]();
+    renderSimMenu();
+  });
+}
+
+// — Barra inferior del negocio en móvil: cuatro secciones y "Más" —
+function renderPanelTabbar() {
+  const bar = document.getElementById('panel-tabbar');
+  const more = document.getElementById('panel-more');
+  if (!bar || !more) return;
+  const hash = window.location.hash.slice(1);
+  const hidden = getState().hiddenModules || [];
+  const visible = PANEL_NAV.filter(n => !n.module || !hidden.includes(n.module));
+  const primary = visible.length <= 5 ? visible : visible.slice(0, 4);
+  const rest = visible.length <= 5 ? [] : visible.slice(4);
+  const link = (n, cls) => `
+    <a href="#${n.route}" class="${cls} ${hash.startsWith(n.route) ? `${cls}--active` : ''}" ${hash.startsWith(n.route) ? 'aria-current="page"' : ''}>
+      ${icon(n.icon, { size: 20 })}<span>${n.label}</span>
+    </a>`;
+  bar.innerHTML = primary.map(n => link(n, 'panel-tabbar__item')).join('') + (rest.length ? `
+    <button type="button" class="panel-tabbar__item ${rest.some(n => hash.startsWith(n.route)) ? 'panel-tabbar__item--active' : ''}" id="panel-more-btn" aria-expanded="${!more.hidden}" aria-controls="panel-more">
+      ${icon('sliders', { size: 20 })}<span>Más</span>
+    </button>` : '');
+  more.innerHTML = rest.map(n => link(n, 'panel-more__item')).join('');
+}
+
+function setupPanelTabbar() {
+  const more = document.getElementById('panel-more');
+  document.getElementById('panel-tabbar')?.addEventListener('click', (e) => {
+    if (!e.composedPath().some(el => el.id === 'panel-more-btn')) return;
+    more.hidden = !more.hidden;
+    renderPanelTabbar();
+  });
+  document.addEventListener('click', (e) => {
+    const path = e.composedPath();
+    if (more && !more.hidden && !path.includes(more) && !path.some(el => el.id === 'panel-more-btn')) {
+      more.hidden = true;
+      renderPanelTabbar();
+    }
+  });
+  window.addEventListener('hashchange', () => { if (more) more.hidden = true; });
 }
 
 // Móvil: la cabecera se esconde al bajar y vuelve al subir, para ganar pantalla.
@@ -266,6 +409,11 @@ function renderViewBar() {
   document.querySelectorAll('.panel-sidebar__item[data-module]').forEach(item => {
     item.hidden = hiddenModules.includes(item.dataset.module);
   });
+
+  const simWrap = document.getElementById('sim-menu');
+  if (simWrap) simWrap.hidden = !isPanel || isDemo;
+  if (!document.getElementById('sim-menu-panel')?.hidden) renderSimMenu();
+  renderPanelTabbar();
 
   const whoEl = document.getElementById('view-bar-who');
   if (whoEl) whoEl.innerHTML = who;
@@ -430,6 +578,9 @@ function renderTourDock(state) {
 function showToast(message) {
   const container = document.getElementById('toast-container');
   if (!container) return;
+  // En el negocio, un solo aviso breve; en el público, hasta tres
+  const panel = document.body.classList.contains('mode-panel');
+  if (panel) container.innerHTML = '';
 
   const toast = document.createElement('div');
   toast.className = 'toast animate-slide-up';
@@ -442,7 +593,7 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.add('toast--exit');
     setTimeout(() => toast.remove(), 300);
-  }, 3200);
+  }, panel ? 2400 : 3200);
 }
 
 // Avisos: se sigue la última notificación vista (el store guarda solo 20, así que
@@ -462,6 +613,8 @@ function flushToasts() {
   const fresh = seenIdx === -1 ? notifications.length : seenIdx;
   lastSeenNotificationId = notifications[0].id;
   if (fresh === 0) return;
+  // Con el menú Simular abierto, el resultado ya se ve en el propio menú
+  if (document.getElementById('sim-menu-panel')?.hidden === false) return;
   showToast(notifications[0].message);
   // No más de tres avisos a la vez
   const container = document.getElementById('toast-container');

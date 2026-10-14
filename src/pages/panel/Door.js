@@ -1,12 +1,14 @@
 // Operium Club — Negocio: Puerta
 // Simula la app del portero dentro de un marco de teléfono. Al lado, lo que el
-// encargado ve en vivo de esa noche. El check-in es idempotente: un ingreso por
-// miembro y evento.
+// encargado ve en vivo de esa noche. Modo principal: escanear el pase QR del
+// miembro (como en el cine); respaldo: buscar por nombre. El check-in es
+// idempotente: un ingreso por miembro y evento.
 
 import { getState, subscribe, checkIn } from '../../store.js';
 import { VENUES, getVenue } from '../../data/venues.js';
 import { icon } from '../../icons.js';
-import { pct, fmt } from '../../metrics.js';
+import { pct, fmt, soles } from '../../metrics.js';
+import { qrSvg, passPayload } from '../../qr.js';
 import { pageHeader } from './ui.js';
 
 export default function Door() {
@@ -15,6 +17,8 @@ export default function Door() {
   let eventId = '';
   let memberId = '';
   let feedback = '';
+  let mode = 'scan'; // scan | search
+  let lastScanned = '';
 
   function render() {
     const { currentVenueId: ctx, events, members } = getState();
@@ -26,8 +30,17 @@ export default function Door() {
       eventId = (venueEvents.find(e => !e.finished) || venueEvents[0])?.id || '';
       memberId = '';
       feedback = '';
+      lastScanned = '';
     }
     const event = venueEvents.find(e => e.id === eventId);
+    const { currentMemberId, promoters } = getState();
+
+    // Fila con pase: quien guardó el evento y aún no entró. El miembro de la
+    // vista público va primero, para seguir la historia del recorrido.
+    const queue = members
+      .filter(m => m.savedEvents.includes(eventId) && !m.checkins.some(c => c.eventId === eventId))
+      .sort((a, b) => Number(b.id === currentMemberId) - Number(a.id === currentMemberId));
+    const next = queue[0];
 
     // Primero quien guardó el evento: es a quien el portero buscará antes
     const candidates = members.slice(0, 40).map(m => ({
@@ -43,7 +56,7 @@ export default function Door() {
 
     return `
       <div class="panel-page nb-page door-page">
-        ${pageHeader({ ctx, eyebrow: 'Puerta', title: 'Registro de ingresos' })}
+        ${pageHeader({ title: 'Puerta' })}
 
         <div class="door-layout">
           <div class="door-device" aria-label="Simulación de la app del portero">
@@ -69,6 +82,26 @@ export default function Door() {
                     ${venueEvents.map(e => `<option value="${e.id}" ${e.id === eventId ? 'selected' : ''}>${e.dayLabel.split(' ')[0]} ${e.time} · ${e.title}</option>`).join('')}
                   </select>
 
+                  <div class="door-modes" role="tablist" aria-label="Forma de registro">
+                    <button type="button" role="tab" class="door-modes__opt ${mode === 'scan' ? 'is-active' : ''}" aria-selected="${mode === 'scan'}" data-door-mode="scan">${icon('camera', { size: 15 })} Escanear QR</button>
+                    <button type="button" role="tab" class="door-modes__opt ${mode === 'search' ? 'is-active' : ''}" aria-selected="${mode === 'search'}" data-door-mode="search">${icon('search', { size: 15 })} Buscar</button>
+                  </div>
+
+                  ${mode === 'scan' ? `
+                    <div class="door-scan">
+                      <div class="door-scan__view">
+                        ${next ? `${qrSvg(passPayload(next.id, eventId), { size: 132, label: 'Pase QR frente a la cámara' })}<span class="door-scan__line" aria-hidden="true"></span>` : `<span class="door-scan__empty">Nadie más en la fila con pase</span>`}
+                        <span class="door-scan__corner door-scan__corner--tl"></span><span class="door-scan__corner door-scan__corner--tr"></span>
+                        <span class="door-scan__corner door-scan__corner--bl"></span><span class="door-scan__corner door-scan__corner--br"></span>
+                      </div>
+                      <p class="door-scan__hint">${next ? `${fmt(queue.length)} ${queue.length === 1 ? 'persona' : 'personas'} en la fila con pase` : 'Quien no guardó el evento entra con “Buscar”.'}</p>
+                    </div>
+                    <button type="button" class="btn btn--primary btn--lg door-app__go" id="door-scan" ${next ? '' : 'disabled'}>
+                      ${icon('camera', { size: 18 })} Escanear
+                    </button>
+                    ${lastScanned ? `<button type="button" class="door-app__again" id="door-scan-again">Volver a escanear el mismo pase</button>` : ''}
+                    <div class="door-app__result" aria-live="polite">${feedback}</div>
+                  ` : `
                   <label class="door-app__label" for="door-search">Buscar miembro</label>
                   <input id="door-search" class="form-input" type="search" placeholder="Nombre…" autocomplete="off" />
 
@@ -87,6 +120,7 @@ export default function Door() {
                     ${icon('ticket', { size: 18 })} Registrar ingreso
                   </button>
                   <div class="door-app__result" aria-live="polite">${feedback}</div>
+                  `}
                 </div>
               `}
             </div>
@@ -99,6 +133,9 @@ export default function Door() {
               <dl class="nb-stats">
                 <div><dt>Ingresos</dt><dd>${fmt(event.checkinCount)}</dd><small>de ${fmt(event.capacity)} de aforo</small></div>
                 <div><dt>Guardaron y vinieron</dt><dd class="nb-accent">${fmt(event.savedAttended)}</dd><small>de ${fmt(event.savedCount)} que guardaron (${pct(event.savedAttended, event.savedCount)}%)</small></div>
+                <div><dt>Consumo registrado</dt>${event.identifiedReceipts
+                  ? `<dd>${soles(event.identifiedSpend)}</dd><small>${fmt(event.identifiedReceipts)} boletas de caja</small>`
+                  : '<dd class="nb-muted">—</dd><small>llega de caja durante la noche</small>'}</div>
               </dl>
               <h3 class="nb-subtitle">Últimos ingresos con nombre</h3>
               ${inside.length ? `
@@ -106,11 +143,11 @@ export default function Door() {
                   ${inside.slice(0, 6).map(({ m, c }) => `
                     <li class="vt-feed__item vt-feed__item--checkin">
                       <span class="vt-feed__icon">${icon('check', { size: 14 })}</span>
-                      <div><div><strong>${m.name}</strong>${m.savedEvents.includes(eventId) ? ' · había guardado el evento' : ''}</div><small>${c.time} · validó ${c.validatedBy}</small></div>
+                      <div><div><strong>${m.name}</strong>${m.referredBy ? ` · referido por ${promoters.find(p => p.id === m.referredBy)?.name || ''}` : ''}</div><small>${c.time} · ${c.method === 'qr' ? 'pase QR' : 'búsqueda manual'} · validó ${c.validatedBy}</small></div>
                     </li>
                   `).join('')}
                 </ol>
-              ` : '<p class="vt-panel__note">Aún nadie ingresó. Registra uno desde el teléfono y vuelve a intentarlo con el mismo miembro: el segundo se rechaza.</p>'}
+              ` : '<p class="vt-panel__note">Sin ingresos todavía.</p>'}
             ` : '<p class="vt-panel__note">Elige un local en el teléfono para empezar.</p>'}
           </section>
         </div>
@@ -140,8 +177,42 @@ export default function Door() {
         eventId = e.target.value;
         memberId = '';
         feedback = '';
+        lastScanned = '';
         rerender();
       });
+
+      document.querySelectorAll('.door-page [data-door-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          mode = btn.dataset.doorMode;
+          feedback = '';
+          rerender();
+        });
+      });
+
+      // Escaneo simulado: lee el pase de quien está frente a la cámara
+      const scan = (id) => {
+        const state = getState();
+        const member = state.members.find(m => m.id === id);
+        if (!member) return;
+        const venue = getVenue(doorVenueId);
+        const result = checkIn(id, eventId, venue?.manager || 'Puerta', 'qr');
+        lastScanned = id;
+        const promoter = state.promoters.find(p => p.id === member.referredBy);
+        feedback = result.success
+          ? `<div class="door-verdict door-verdict--ok">${icon('check', { size: 28 })}<strong>Ingreso válido</strong><span>${member.name}</span><small>${result.checkin?.time}${promoter ? ` · referido por ${promoter.name}` : ''}</small></div>`
+          : result.duplicate
+            ? `<div class="door-verdict door-verdict--dup">${icon('lock', { size: 28 })}<strong>Ya ingresó</strong><span>${member.name}</span><small>Este pase ya se usó esta noche. El conteo no cambia.</small></div>`
+            : `<div class="door-verdict door-verdict--bad">${icon('x', { size: 28 })}<strong>Pase no válido</strong><small>${result.reason}</small></div>`;
+        rerender();
+      };
+      document.getElementById('door-scan')?.addEventListener('click', () => {
+        const { members, currentMemberId } = getState();
+        const next = members
+          .filter(m => m.savedEvents.includes(eventId) && !m.checkins.some(c => c.eventId === eventId))
+          .sort((a, b) => Number(b.id === currentMemberId) - Number(a.id === currentMemberId))[0];
+        if (next) scan(next.id);
+      });
+      document.getElementById('door-scan-again')?.addEventListener('click', () => scan(lastScanned));
 
       // Filtro en el propio DOM para no perder el foco del buscador
       document.getElementById('door-search')?.addEventListener('input', (e) => {
@@ -167,7 +238,7 @@ export default function Door() {
         const state = getState();
         const member = state.members.find(m => m.id === memberId);
         const venue = getVenue(doorVenueId);
-        const result = checkIn(memberId, eventId, venue?.manager || 'Puerta');
+        const result = checkIn(memberId, eventId, venue?.manager || 'Puerta', 'manual');
         const name = member ? member.name : memberId;
         feedback = result.success
           ? `<div class="vt-result vt-result--ok">${icon('check', { size: 16 })}<div><strong>Ingreso registrado.</strong> ${name} · ${result.checkin?.time}</div></div>`

@@ -1,4 +1,4 @@
-// Operium Club — Negocio: Público
+// Operium Club — Negocio: Campañas
 // Pregunta: ¿a quién puedo invitar? Segmentos de la base y campañas que solo
 // llegan a quien autorizó el canal y el local (Ley 29733, DS 016-2024-JUS).
 
@@ -50,17 +50,11 @@ export default function Marketing() {
       };
     }
 
-    const insight = audit
-      ? `${audit.excluded.length} de ${audit.target.length} ${segmentLabel(campaign.segment)} no recibirán "${campaign.name}": no autorizaron el ${audit.channel} o a ${audit.venue?.name}.`
-      : '';
 
     return `
       <div class="panel-page nb-page marketing-page">
         ${pageHeader({
-          ctx,
-          eyebrow: 'Público',
-          title: 'A quién puedes invitar',
-          insight,
+          title: 'Campañas',
           aside: `
             <dl class="vt-kpis">
               <div><dt>${ctx === 'all' ? 'Miembros' : `Autorizan a ${ctxLabel(ctx)}`}</dt><dd>${fmt(base.length)}</dd></div>
@@ -80,8 +74,7 @@ export default function Marketing() {
                 <div class="mk-segment">
                   <span class="vt-fact__label"><span class="mk-swatch mk-swatch--${sg.css}"></span>${sg.label}</span>
                   <span class="mk-segment__value">${list.length}<small>${pct(list.length, base.length)}%</small></span>
-                  <p>${sg.desc} ${list.filter(m => m.consent.email).length} de ${list.length} aceptan email.</p>
-                  <p class="mk-segment__action">Siguiente paso: ${sg.action}</p>
+                  <p>${sg.desc}</p>
                 </div>
               `;
             }).join('')}
@@ -106,7 +99,7 @@ export default function Marketing() {
               </div>
               ${!audit.sent ? `
                 <button type="button" class="btn btn--primary btn--lg btn-send-campaign" data-campaign-id="${campaign.id}">
-                  ${icon('mail', { size: 18 })} Envío simulado
+                  ${icon('mail', { size: 18 })} Enviar campaña
                 </button>
               ` : `
                 <span class="badge badge--success">${icon('check', { size: 12 })} ${campaign.status === 'completed' ? 'Completada' : 'Enviada'}</span>
@@ -137,8 +130,7 @@ export default function Marketing() {
                   <li><span>Sin permiso de ${audit.channel}</span><strong>${audit.noChannel}</strong></li>
                   <li><span>Sin permiso para ${audit.venue?.name}</span><strong>${audit.noVenue}</strong></li>
                 </ul>
-                ${audit.noChannel + audit.noVenue > audit.excluded.length ? '<p class="mk-audit__sample">Algunos miembros cumplen ambos motivos; cuentan una sola vez.</p>' : ''}
-                <p class="mk-audit__sample">Solo recibe quien autorizó el canal y el local (Ley 29733, DS 016-2024-JUS).</p>
+                <p class="mk-audit__sample">Ley 29733 · DS 016-2024-JUS</p>
               </div>
             </div>
 
@@ -148,7 +140,7 @@ export default function Marketing() {
                 <div><span class="vt-fact__label">Aperturas</span><strong>${campaign.responses?.opened ?? 0}</strong></div>
                 <div><span class="vt-fact__label">Clics</span><strong>${campaign.responses?.clicked ?? 0}</strong></div>
                 <div><span class="vt-fact__label">Guardados</span><strong>${campaign.responses?.saved ?? 0}</strong></div>
-                <p>${campaign.status === 'completed' ? 'Resultado real de la campaña.' : 'Respuesta simulada con tasas de referencia (65% / 35% / 15%).'}</p>
+                ${campaign.status === 'completed' ? '' : '<p>Respuesta simulada</p>'}
               </div>
             ` : ''}
           </section>

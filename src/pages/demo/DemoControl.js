@@ -19,6 +19,12 @@ import { icon } from '../../icons.js';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
+// Pasos del recorrido y el módulo del que depende cada uno (ver TOUR_STEPS en main.js)
+const TOUR_NAMES = [
+  ['Descubrir'], ['Puerta', 'puerta'], ['Clientes', 'clientes'], ['Mi Club', 'clientes'],
+  ['Promotores'], ['Campañas', 'campanas'], ['Resumen'],
+];
+
 export default function DemoControl() {
   function render() {
     const state = getState();
@@ -47,9 +53,10 @@ export default function DemoControl() {
     // Roles disponibles con metadatos
     const ROLES = [
       { id: 'publico', name: 'Público', persona: 'Miembro del club', route: '/discover', desc: 'Descubre eventos, guarda en Mi Club y sigue locales.' },
-      { id: 'promotor', name: 'Promotor', persona: 'Ricardo V. (Mood)', route: '/panel/origen', desc: 'Comparte su enlace y ve cuántas visitas trae.' },
-      { id: 'marketing', name: 'Marketing', persona: 'Equipo Central', route: '/panel/publico', desc: 'Segmenta la base y envía solo a quien dio permiso.' },
-      { id: 'ventas', name: 'Puerta', persona: 'Personal de Recepción', route: '/panel/puerta', desc: 'Registra ingresos; uno por persona y evento.' },
+      { id: 'promotor', name: 'Promotor', persona: 'Ricardo V. (Mood)', route: '/panel/promotores', desc: 'Suma puntos por los referidos que entran con QR y por lo que consumen.' },
+      { id: 'marketing', name: 'Marketing', persona: 'Equipo Central', route: '/panel/campanas', desc: 'Segmenta la base y envía solo a quien dio permiso.' },
+      { id: 'ventas', name: 'Puerta', persona: 'Personal de Recepción', route: '/panel/puerta', desc: 'Escanea el pase QR; un ingreso por persona y evento.' },
+      { id: 'caja', name: 'Clientes y puntos', persona: 'Encargado de local', route: '/panel/clientes', desc: 'Ve el consumo con DNI que llega de caja y los puntos de cada cliente.' },
       { id: 'encargado', name: 'Encargado de local', persona: currentVenue ? `${currentVenue.manager} (${currentVenue.name})` : 'Encargado de cada local', route: '/panel/eventos', desc: 'Compara interés, asistencia y aforo de su local.' },
       { id: 'grupo', name: 'Dirección del grupo', persona: 'Conan (Administrador)', route: '/panel/resumen', desc: 'Compara las cuatro marcas con cifras agregadas.' },
     ];
@@ -58,12 +65,13 @@ export default function DemoControl() {
 
     const HOW = [
       { title: 'Descubrir', body: 'El público ve la agenda de los cuatro locales y guarda lo que le interesa. Guardar suma interés; no cuenta como asistencia ni como venta. Funciona en el navegador, sin instalar nada.' },
-      { title: 'Evento y Mi Club', body: 'Ficha del evento con su beneficio para miembros y un pase ilustrativo. El pase no es una entrada ni garantiza acceso si el local llega al aforo.' },
-      { title: 'Resumen', body: 'Entrada del negocio. Separa este fin de semana (interés) del anterior (asistencia y conversión reales) y compara los cuatro locales. Las ventas nunca se estiman.' },
-      { title: 'Eventos', body: 'Cada fecha con su estado. Antes de abrir solo hay guardados frente al aforo; cuando la noche cierra aparecen asistencia y conversión.' },
-      { title: 'Origen', body: 'De dónde llega el público: promotores, campañas o directo. Cada promotor tiene un enlace propio; una visita por miembro y evento, sin comisiones en esta fase.' },
-      { title: 'Público', body: 'Segmentos nuevo, recurrente y sin actividad. Antes de cualquier envío se verifica el permiso del canal y del local; quien no lo dio queda fuera. Las respuestas se simulan con tasas de referencia (65% / 35% / 15%).' },
-      { title: 'Puerta', body: 'La app del portero, simulada en un teléfono. El check-in es idempotente: el segundo intento con el mismo miembro se rechaza y el conteo no cambia.' },
+      { title: 'Evento y Mi Club', body: 'Al guardar un evento, el miembro recibe un pase con QR para la puerta. No es una entrada pagada: el acceso depende del aforo. En Mi Club ve sus puntos y canjea recompensas válidas en los cuatro locales.' },
+      { title: 'Resumen', body: 'Entrada del negocio. Separa este fin de semana (interés) del anterior (asistencia y conversión reales) y compara los cuatro locales. El consumo solo aparece si llega de caja con DNI; nunca se estima.' },
+      { title: 'Eventos', body: 'Cada fecha con su estado. Antes de abrir solo hay guardados frente al aforo; cuando la noche cierra aparecen asistencia y conversión. Desde aquí se crean, editan y borran fechas.' },
+      { title: 'Promotores', body: 'Cada promotor tiene un enlace propio. Suma 10 puntos por cada referido que entra con su QR y 1 punto por cada S/ 10 que ese referido consume con su DNI, durante 90 días. Ve totales, nunca qué consumió cada persona. Puntos, no comisiones en dinero.' },
+      { title: 'Clientes', body: 'Conectado a caja, solo lectura: Operium no cobra ni emite boletas. Lee las boletas con DNI y, si el cliente activó sus puntos (consentimiento propio, aparte del de marketing), suma 1 punto por cada S/ 1. Sin ese permiso la boleta no se vincula.' },
+      { title: 'Campañas', body: 'Segmentos nuevo, recurrente y sin actividad. Antes de cualquier envío se verifica el permiso del canal y del local; quien no lo dio queda fuera. Las respuestas se simulan con tasas de referencia (65% / 35% / 15%).' },
+      { title: 'Puerta', body: 'La app del portero, simulada en un teléfono. Escanea el pase QR del miembro (o lo busca por nombre si no lo tiene). Un pase vale una vez por noche: el segundo escaneo se rechaza y el conteo no cambia.' },
       { title: 'Contexto', body: 'El selector “Viendo” de la barra lateral cambia entre todo el grupo y cada local, y filtra todas las pantallas. Ningún local ve datos personales de otra marca.' },
     ];
 
@@ -83,14 +91,14 @@ export default function DemoControl() {
           <div class="dc-action">
             <div>
               <h2 class="dc-action__title">Recorrido guiado</h2>
-              <p>${hidden.length ? `${6 - hidden.length} pasos` : 'Seis pasos'}: Descubrir, Origen${hidden.includes('publico') ? '' : ', Público'}${hidden.includes('puerta') ? '' : ', Puerta'}, Eventos y Resumen.</p>
+              <p>${TOUR_NAMES.filter(([, mod]) => !mod || !hidden.includes(mod)).map(([name]) => name).join(' · ')}.</p>
             </div>
             <button type="button" class="btn btn--primary btn--md" id="btn-start-tour">${icon('map', { size: 16 })} Empezar</button>
           </div>
           <div class="dc-action">
             <div>
               <h2 class="dc-action__title">Simular la noche del viernes</h2>
-              <p>${fridayDone ? 'Ya simulada. Reinicia para volver al jueves.' : 'Cierra las cuatro noches del viernes con asistencia y conversión realistas.'}</p>
+              <p>${fridayDone ? 'Ya simulada. Reinicia para volver al jueves.' : 'Cierra las cuatro noches del viernes con asistencia, conversión y consumo con DNI realistas.'}</p>
             </div>
             <button type="button" class="sim-btn sim-btn--md" id="btn-simulate-weekend" ${fridayDone ? 'disabled' : ''}>${icon('zap', { size: 16 })} Simular viernes</button>
           </div>
@@ -142,7 +150,7 @@ export default function DemoControl() {
             <span class="vt-panel__hint">Si ya resuelven algo con otra herramienta, quítalo del menú y del recorrido</span>
           </div>
           <div class="dc-modules">
-            ${[['publico', 'Público', 'Segmentos y campañas con consentimiento'], ['puerta', 'Puerta', 'Registro de ingresos (si ya tienen check-in con QR)']].map(([id, name, hint]) => `
+            ${[['puerta', 'Puerta', 'Ingreso con pase QR (si ya tienen control de acceso)'], ['clientes', 'Clientes y puntos', 'Consumo con DNI desde caja y recompensas'], ['campanas', 'Campañas', 'Segmentos y envíos con consentimiento']].map(([id, name, hint]) => `
               <label class="dc-module">
                 <input type="checkbox" data-module-toggle="${id}" ${hidden.includes(id) ? '' : 'checked'} />
                 <span><strong>${name}</strong><small>${hint}</small></span>

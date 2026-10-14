@@ -1,9 +1,10 @@
 // Operium Club — Pantalla B: Detalle del Evento (EventDetail)
-// Vista en profundidad con arte visual, pase ilustrativo (NO entrada), beneficio exclusivo y métricas
+// Vista en profundidad con arte visual, pase QR de puerta (no es una entrada pagada), beneficio exclusivo y métricas
 
 import { getState, saveEvent, unsaveEvent, followVenue, subscribe } from '../../store.js';
 import { getVenue } from '../../data/venues.js';
 import { icon } from '../../icons.js';
+import { qrSvg, passPayload } from '../../qr.js';
 
 export default function EventDetail(params = {}) {
   // Parsear el ID del evento desde params o hash
@@ -42,7 +43,8 @@ export default function EventDetail(params = {}) {
     const isFollowed = currentMember?.following?.includes(venue.id);
     const memberName = currentMember ? currentMember.name : 'Miembro Invitado';
     const memberId = currentMember ? currentMember.id : 'M-DEMO';
-    const memberSegment = currentMember ? currentMember.segment : 'nuevo';
+    const memberSegment = currentMember ? { recurrente: 'Recurrente', nuevo: 'Nuevo', sin_interaccion: 'Sin actividad' }[currentMember.segment] : 'Nuevo';
+    const checkin = currentMember?.checkins?.find(c => c.eventId === event.id);
 
     return `
       <div class="event-detail animate-fade-in">
@@ -139,55 +141,36 @@ export default function EventDetail(params = {}) {
           </div>
 
           <aside class="event-detail__sidebar">
-            <div class="pass-card">
+            <div class="pass-card ${isSaved ? '' : 'pass-card--locked'}">
               <div class="pass-card__header">
                 <span class="pass-card__brand">Operium Club</span>
-                <span class="pass-card__type">Pase de miembro</span>
+                <span class="pass-card__type">Pase de puerta</span>
               </div>
               <div class="pass-card__member-info">
                 <div class="pass-card__member-name">${memberName}</div>
-                <div class="pass-card__member-id">${memberId} · ${memberSegment}</div>
+                <div class="pass-card__member-id">${currentMember?.dniLast4 ? `DNI ••••${currentMember.dniLast4}` : memberId} · ${memberSegment}</div>
               </div>
               <div class="pass-card__event">
                 <div class="pass-card__event-title">${event.title}</div>
                 <div class="pass-card__event-meta">${venue.name} · ${event.dayLabel} · ${event.time}–${event.endTime || 'cierre'}</div>
               </div>
-              <div class="pass-card__qr-simulation" title="Código ilustrativo">
-                <svg viewBox="0 0 100 100" width="100%" height="100%" shape-rendering="crispEdges">
-                  <rect width="100" height="100" fill="#FAF3E8" />
-                  <!-- QR Finder Pattern Top-Left -->
-                  <rect x="10" y="10" width="24" height="24" fill="#0D0D0D" />
-                  <rect x="14" y="14" width="16" height="16" fill="#FAF3E8" />
-                  <rect x="18" y="18" width="8" height="8" fill="#0D0D0D" />
-                  <!-- QR Finder Pattern Top-Right -->
-                  <rect x="66" y="10" width="24" height="24" fill="#0D0D0D" />
-                  <rect x="70" y="14" width="16" height="16" fill="#FAF3E8" />
-                  <rect x="74" y="18" width="8" height="8" fill="#0D0D0D" />
-                  <!-- QR Finder Pattern Bottom-Left -->
-                  <rect x="10" y="66" width="24" height="24" fill="#0D0D0D" />
-                  <rect x="14" y="70" width="16" height="16" fill="#FAF3E8" />
-                  <rect x="18" y="74" width="8" height="8" fill="#0D0D0D" />
-                  <!-- Mock Matrix Bits -->
-                  <rect x="38" y="14" width="6" height="6" fill="#0D0D0D" />
-                  <rect x="48" y="10" width="6" height="6" fill="#0D0D0D" />
-                  <rect x="40" y="28" width="8" height="6" fill="#0D0D0D" />
-                  <rect x="52" y="24" width="6" height="8" fill="#0D0D0D" />
-                  <rect x="14" y="42" width="6" height="6" fill="#0D0D0D" />
-                  <rect x="28" y="42" width="8" height="6" fill="#0D0D0D" />
-                  <rect x="42" y="42" width="16" height="16" fill="#0D0D0D" />
-                  <rect x="46" y="46" width="8" height="8" fill="#FAF3E8" />
-                  <rect x="66" y="42" width="6" height="12" fill="#0D0D0D" />
-                  <rect x="78" y="46" width="12" height="6" fill="#0D0D0D" />
-                  <rect x="38" y="66" width="8" height="6" fill="#0D0D0D" />
-                  <rect x="52" y="66" width="6" height="12" fill="#0D0D0D" />
-                  <rect x="66" y="66" width="12" height="6" fill="#0D0D0D" />
-                  <rect x="42" y="82" width="8" height="8" fill="#0D0D0D" />
-                  <rect x="58" y="80" width="8" height="8" fill="#0D0D0D" />
-                  <rect x="74" y="78" width="14" height="12" fill="#0D0D0D" />
-                </svg>
-              </div>
+              ${!isSaved ? `
+                <div class="pass-card__qr pass-card__qr--locked">
+                  ${icon('lock', { size: 22 })}
+                  <span>Guarda el evento para activar tu QR</span>
+                </div>
+              ` : checkin ? `
+                <div class="pass-card__qr pass-card__qr--used">
+                  ${qrSvg(passPayload(memberId, event.id), { size: 148, label: 'Pase QR ya usado' })}
+                  <span class="pass-card__stamp">${icon('check', { size: 16 })} Ya ingresaste</span>
+                </div>
+              ` : `
+                <div class="pass-card__qr">
+                  ${qrSvg(passPayload(memberId, event.id), { size: 148, label: `Pase QR para ${event.title}` })}
+                </div>
+              `}
               <div class="pass-card__disclaimer">
-                Credencial ilustrativa. No es una entrada ni garantiza acceso.
+                Muéstralo en la puerta. Vale para una persona y una noche; el acceso depende del aforo.
               </div>
             </div>
 

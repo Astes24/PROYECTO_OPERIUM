@@ -1,46 +1,14 @@
 // Operium Club — Negocio: Eventos
-// Pregunta: ¿qué evento funciona y cuál no? Interés frente a aforo antes de abrir;
-// asistencia y conversión cuando la noche ya se celebró.
-// Incluye la gestión de fechas (crear, editar, borrar) y la recomendación de
-// próxima convocatoria que aportó Erick en origin/main, adaptadas al rediseño.
+// Interés frente a aforo antes de abrir; asistencia y conversión cuando la
+// noche ya se celebró. Gestión de fechas (crear, editar, borrar).
 
 import { getState, subscribe, createEvent, updateEvent, deleteEvent } from '../../store.js';
 import { VENUES, getVenue } from '../../data/venues.js';
 import { icon } from '../../icons.js';
-import { currentWeekend, laterEvents, history, lastWeekend, followers, ctxVenues, eventStatus, eventsInsight, fmt, pct } from '../../metrics.js';
+import { currentWeekend, laterEvents, history, eventStatus, fmt, pct } from '../../metrics.js';
 import { pageHeader, statusChip } from './ui.js';
 
-// Propuesta de próxima convocatoria por local (contenido de Erick, sin emojis)
-const SUGGESTIONS = {
-  mood: {
-    title: 'Sunset to Deep: Rooftop Experience',
-    subtitle: 'Special Guest DJ & Beefeater Lounge',
-    time: '21:00', endTime: '04:00', capacity: 240,
-    benefitTitle: 'Cóctel Sunset de bienvenida',
-    benefitDesc: 'Ingreso preferencial por ascensor VIP y cóctel de bienvenida hasta las 23:00.',
-  },
-  play: {
-    title: 'Play Neon Sessions: Electro-Pop Night',
-    subtitle: 'Show de láseres sincronizado y barra de shots',
-    time: '22:00', endTime: '04:30', capacity: 350,
-    benefitTitle: 'Pulsera luminosa VIP y shot de bienvenida',
-    benefitDesc: 'Acceso por carril exclusivo para miembros del club con pase activo.',
-  },
-  'senor-peru': {
-    title: 'Peña Criolla & Salsa Brava en Vivo',
-    subtitle: 'Orquesta de primer nivel y gastronomía norteña',
-    time: '20:30', endTime: '03:30', capacity: 250,
-    benefitTitle: 'Piqueo criollo y Pisco Sour de cortesía',
-    benefitDesc: 'Mesa con vista al escenario para miembros que confirmen antes de las 21:30.',
-  },
-  adria: {
-    title: '#AdriaNights: Premium Lounge & Cocktails',
-    subtitle: 'Coctelería de autor, maridaje y DJ residente',
-    time: '20:00', endTime: '03:00', capacity: 160,
-    benefitTitle: 'Copa de espumante y tabla de autor',
-    benefitDesc: 'Atención personalizada en zona lounge para grupos con reserva en el club.',
-  },
-};
+// Fecha por defecto al crear un evento: el sábado siguiente al fin de semana en curso
 const NEXT_SATURDAY = '2026-10-24';
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -51,23 +19,6 @@ function dayLabelFor(date) {
 }
 
 const esc = (v = '') => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-// Demanda por local con el criterio de Erick: guardados ×2 + seguidores ×1,5 + visitas recientes ×3
-function recommend(ctx) {
-  const { promoters } = getState();
-  const scored = ctxVenues(ctx).map(venue => {
-    const now = currentWeekend(venue.id);
-    const fans = followers(venue.id);
-    const signals = promoters.filter(p => p.venue === venue.id).reduce((acc, p) => acc + p.signals.length, 0);
-    return { venue, now, fans, signals, score: now.saved * 2 + fans * 1.5 + signals * 3 };
-  }).sort((a, b) => b.score - a.score);
-  const top = scored[0];
-  const last = lastWeekend(top.venue.id);
-  const reason = ctx === 'all'
-    ? `${top.venue.name} concentra la mayor demanda del grupo: ${fmt(top.now.saved)} guardados para este fin de semana, ${fmt(top.fans)} seguidores y un ${last.conversion}% de conversión la semana pasada.`
-    : `${top.venue.name} suma ${fmt(top.now.saved)} guardados para este fin de semana y un ${last.conversion}% de conversión la semana pasada: hay público para repetir el sábado siguiente.`;
-  return { ...top, reason, suggestion: SUGGESTIONS[top.venue.id] };
-}
 
 export default function Events() {
   let dayFilter = 'all';
@@ -163,53 +114,33 @@ export default function Events() {
   }
 
   function render() {
-    const { currentVenueId: ctx, events: allEvents } = getState();
+    const { currentVenueId: ctx } = getState();
     const now = currentWeekend(ctx);
     const events = now.events
-      .filter(e => dayFilter === 'all' || e.date === dayFilter)
+      .filter(e => dayFilter === 'all' || now.events.length <= 4 || e.date === dayFilter)
       .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
     const later = laterEvents(ctx);
     const hist = [...history(ctx)].reverse();
-    const rec = recommend(ctx);
-    const applied = allEvents.some(e => e.venueId === rec.venue.id && e.title === rec.suggestion.title);
 
     return `
       <div class="panel-page nb-page events-page">
         ${pageHeader({
-          ctx,
-          eyebrow: 'Eventos',
-          title: 'Qué fechas funcionan',
-          insight: eventsInsight(ctx),
+          title: 'Eventos',
           aside: `<button type="button" class="btn btn--primary btn--md nb-header__action" id="btn-open-create-modal">${icon('calendar', { size: 16 })} Nuevo evento</button>`,
         })}
 
-        <section class="vt-panel nb-rec">
-          <div class="nb-rec__body">
-            <span class="section-title__eyebrow">${icon('sparkle', { size: 13 })} Próxima convocatoria sugerida · ${rec.venue.name}</span>
-            <h2 class="vt-panel__title">${rec.suggestion.title}</h2>
-            <p class="nb-rec__reason">${rec.reason}</p>
-            <dl class="nb-rec__facts">
-              <div><dt>Fecha</dt><dd>${dayLabelFor(NEXT_SATURDAY)} · ${rec.suggestion.time}</dd></div>
-              <div><dt>Aforo sugerido</dt><dd>${rec.suggestion.capacity} personas</dd></div>
-              <div><dt>Beneficio</dt><dd>${rec.suggestion.benefitTitle}</dd></div>
-            </dl>
-          </div>
-          <button type="button" class="btn ${applied ? 'btn--secondary' : 'btn--primary'} btn--md" id="btn-apply-rec" ${applied ? 'disabled' : ''}>
-            ${applied ? `${icon('check', { size: 16 })} Ya en la agenda` : 'Añadir a la agenda'}
-          </button>
-        </section>
-
         <section class="nb-block">
           <div class="nb-block__head">
-            <h2 class="vt-panel__title">Este fin de semana <span class="nb-muted">· ${now.label}</span></h2>
-            <div class="nb-filter" role="group" aria-label="Filtrar por día">
-              ${[['all', 'Ambos días'], ['2026-10-16', 'Vie 16'], ['2026-10-17', 'Sáb 17']].map(([v, l]) => `
-                <button type="button" class="nb-filter__opt ${dayFilter === v ? 'nb-filter__opt--active' : ''}" data-day="${v}">${l}</button>
-              `).join('')}
-            </div>
+            <h2 class="vt-panel__title">Este fin de semana <span class="nb-muted">${now.label}</span></h2>
+            ${now.events.length > 4 ? `
+              <div class="nb-filter" role="group" aria-label="Filtrar por día">
+                ${[['all', 'Ambos días'], ['2026-10-16', 'Vie 16'], ['2026-10-17', 'Sáb 17']].map(([v, l]) => `
+                  <button type="button" class="nb-filter__opt ${dayFilter === v ? 'nb-filter__opt--active' : ''}" data-day="${v}">${l}</button>
+                `).join('')}
+              </div>
+            ` : ''}
           </div>
           <ul class="nb-events">${events.map(eventRow).join('')}</ul>
-          <p class="vt-panel__note">Antes de abrir solo hay interés. La asistencia y la conversión aparecen cuando la puerta cierra la noche.</p>
         </section>
 
         ${later.length ? `
@@ -226,16 +157,16 @@ export default function Events() {
             <h2 class="vt-panel__title">Fines de semana anteriores</h2>
           </div>
           <div class="table-responsive">
-            <table class="vt-table nb-table">
+            <table class="vt-table nb-table nb-table--compact">
               <thead>
                 <tr><th>Fin de semana</th><th>Guardados</th><th>Asistencias</th><th>Conversión</th><th>Ocupación</th></tr>
               </thead>
               <tbody>
                 ${hist.map(h => `
                   <tr>
-                    <td data-label="Fin de semana"><strong>${h.label}</strong></td>
+                    <td data-label="Fin de semana"><strong>${h.label}</strong><small class="nb-table__mobile">${h.conversion}% conversión · ${h.occupancy}% ocupación</small></td>
                     <td data-label="Guardados">${fmt(h.saved)}</td>
-                    <td data-label="Asistencias">${fmt(h.checkins)}</td>
+                    <td data-label="Asistencias" class="nb-table__primary">${fmt(h.checkins)}<span class="nb-table__unit nb-table__mobile"> asistencias</span></td>
                     <td data-label="Conversión">${h.conversion}%</td>
                     <td data-label="Ocupación">${h.occupancy}%</td>
                   </tr>
@@ -277,22 +208,6 @@ export default function Events() {
         btn.addEventListener('click', () => {
           const ev = getState().events.find(e => e.id === btn.dataset.delete);
           if (ev && window.confirm(`¿Eliminar "${ev.title}" de la agenda de la demo?`)) deleteEvent(ev.id);
-        });
-      });
-
-      document.getElementById('btn-apply-rec')?.addEventListener('click', () => {
-        const rec = recommend(getState().currentVenueId);
-        const s = rec.suggestion;
-        createEvent({
-          venueId: rec.venue.id,
-          title: s.title,
-          subtitle: s.subtitle,
-          date: NEXT_SATURDAY,
-          dayLabel: dayLabelFor(NEXT_SATURDAY),
-          time: s.time,
-          endTime: s.endTime,
-          capacity: s.capacity,
-          benefit: { title: s.benefitTitle, description: s.benefitDesc, eligibility: 'Miembros con perfil activo', conditions: 'Sujeto a aforo disponible.' },
         });
       });
 

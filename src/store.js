@@ -7,6 +7,8 @@ import { MEMBERS } from './data/members.js';
 import { PROMOTERS } from './data/promoters.js';
 import { CAMPAIGNS } from './data/campaigns.js';
 import { VENUES } from './data/venues.js';
+import { PROMOTER_HISTORY } from './data/history.js';
+import { AVG_TICKET, RECEIPT_SERIES, POINTS_PER_SOL, getReward } from './data/loyalty.js';
 
 // Deep clone utility
 function deepClone(obj) {
@@ -26,6 +28,8 @@ const SEED = {
   currentVenueId: 'all', // 'all' = todo el grupo; si no, id del local en foco
   // Módulos del negocio ocultos por el presentador (p. ej. si el cliente ya tiene uno)
   hiddenModules: [],
+  // Correlativo de las boletas que llegan de caja en esta sesión
+  receiptSeq: 4870,
   // Notifications / toast (transient, not persisted)
   notifications: [],
   // Tour state
@@ -36,9 +40,9 @@ const SEED = {
 // ========================
 // SESSION STORAGE PERSISTENCE
 // ========================
-// v2: forma del estado del rediseño (contexto 'all', hiddenModules, finished...).
+// v4: QR en puerta, boletas con DNI, puntos, referidos y recompensas actuales.
 // Cambiar la clave evita restaurar un estado guardado con la forma anterior.
-const STORAGE_KEY = 'operium_demo_state_v2';
+const STORAGE_KEY = 'operium_demo_state_v4';
 
 function saveToSession() {
   try {
@@ -180,6 +184,8 @@ export function createEvent(eventData) {
     savedCount: 0,
     checkinCount: 0,
     savedAttended: 0,
+    identifiedReceipts: 0,
+    identifiedSpend: 0,
     finished: false,
     tags: Array.isArray(eventData.tags) ? eventData.tags : (eventData.tags ? eventData.tags.split(',').map(t => t.trim()) : ['Club Demo']),
     fictitious: true,
@@ -307,10 +313,15 @@ export function sendCampaign(campaignId) {
 }
 
 // — Check-in (idempotent) —
-export function checkIn(memberId, eventId, validatedBy = 'Sistema') {
+// method 'qr': el portero escanea el pase del miembro (existe solo si guardó el evento).
+// method 'manual': búsqueda por nombre, como respaldo.
+export function checkIn(memberId, eventId, validatedBy = 'Sistema', method = 'manual') {
   const member = state.members.find(m => m.id === memberId);
   const event = state.events.find(e => e.id === eventId);
   if (!member || !event) return { success: false, reason: 'Miembro o evento no encontrado' };
+  if (method === 'qr' && !member.savedEvents.includes(eventId)) {
+    return { success: false, reason: 'Este pase no corresponde a este evento.' };
+  }
 
   // Idempotent: check if already checked in
   const alreadyCheckedIn = member.checkins.find(c => c.eventId === eventId);
@@ -327,6 +338,7 @@ export function checkIn(memberId, eventId, validatedBy = 'Sistema') {
     date: event.date,
     time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
     validatedBy,
+    method,
   };
 
   member.checkins.push(checkin);
@@ -336,9 +348,79 @@ export function checkIn(memberId, eventId, validatedBy = 'Sistema') {
     event.savedAttended = (event.savedAttended || 0) + 1;
   }
 
-  addNotification(`Check-in: ${member.firstName} → "${event.title}"`);
+  addNotification(`${method === 'qr' ? 'Ingreso con QR' : 'Ingreso'}: ${member.firstName} → "${event.title}"`);
   notify();
   return { success: true, checkin };
+}
+
+// — Boletas de caja (solo lectura) —
+// Llega una boleta electrónica con DNI desde la caja del local. Si el DNI es de
+// un miembro que autorizó usar sus consumos, se vincula y suma puntos; si no,
+// Operium no guarda nada personal de esa boleta.
+export function recordPurchase(memberId, venueId, amount, eventId = null) {
+  const member = state.members.find(m => m.id === memberId);
+  if (!member) return { linked: false, reason: 'Miembro no encontrado' };
+  const event = eventId ? state.events.find(e => e.id === eventId) : null;
+  state.receiptSeq = (state.receiptSeq || 4870) + 1;
+  const receipt = `${RECEIPT_SERIES[venueId] || 'B000'}-${String(state.receiptSeq).padStart(6, '0')}`;
+  const venueName = state.venues.find(v => v.id === venueId)?.name || venueId;
+
+  if (!member.consent.loyalty) {
+    addNotification(`Boleta ${receipt} de ${venueName} sin vincular: el cliente no activó sus puntos`);
+    notify();
+    return { linked: false, receipt, amount };
+  }
+
+  const purchase = {
+    receipt,
+    venueId,
+    eventId,
+    date: event?.date || '2026-10-15',
+    amount,
+    points: Math.floor(amount * POINTS_PER_SOL),
+  };
+  member.purchases.push(purchase);
+  if (event) {
+    event.identifiedReceipts = (event.identifiedReceipts || 0) + 1;
+    event.identifiedSpend = (event.identifiedSpend || 0) + amount;
+  }
+  addNotification(`Boleta ${receipt}: ${member.firstName} suma ${purchase.points} puntos en ${venueName}`);
+  notify();
+  return { linked: true, receipt, amount, points: purchase.points };
+}
+
+// — Puntos del miembro —
+export function memberPoints(member) {
+  const earned = (member.purchases || []).reduce((acc, p) => acc + p.points, 0);
+  const spent = (member.redemptions || []).reduce((acc, r) => acc + r.points, 0);
+  return earned - spent;
+}
+
+export function redeemReward(memberId, rewardId) {
+  const member = state.members.find(m => m.id === memberId);
+  const reward = getReward(rewardId);
+  if (!member || !reward) return { success: false, reason: 'Recompensa no encontrada' };
+  if (memberPoints(member) < reward.points) return { success: false, reason: 'Aún no tienes puntos suficientes' };
+
+  const redemption = {
+    code: `CJ-${String(2400 + (state.receiptSeq % 1000) + member.redemptions.length).padStart(4, '0')}`,
+    rewardId,
+    points: reward.points,
+    date: '2026-10-15',
+    status: 'pendiente',
+  };
+  member.redemptions.push(redemption);
+  addNotification(`${member.firstName} canjeó "${reward.title}" (${reward.points} puntos)`);
+  notify();
+  return { success: true, redemption };
+}
+
+export function setLoyaltyConsent(memberId, value) {
+  const member = state.members.find(m => m.id === memberId);
+  if (!member) return;
+  member.consent.loyalty = value;
+  addNotification(value ? `${member.firstName} activó sus puntos` : `${member.firstName} desactivó sus puntos`);
+  notify();
 }
 
 // — Tour —
@@ -397,7 +479,18 @@ export function simulateFriday() {
     const rate = FRIDAY_RATES[event.venueId] || { occupancy: 0.7, conversion: 0.5 };
     event.checkinCount = Math.max(event.checkinCount || 0, Math.round(event.capacity * rate.occupancy));
     event.savedAttended = Math.max(event.savedAttended || 0, Math.round(event.savedCount * rate.conversion));
+    // Boletas con DNI que llegaron de caja esa noche (algo más de un tercio del público)
+    event.identifiedReceipts = Math.max(event.identifiedReceipts || 0, Math.round(event.checkinCount * 0.37));
+    event.identifiedSpend = Math.max(event.identifiedSpend || 0, Math.round(event.identifiedReceipts * AVG_TICKET[event.venueId]));
     event.finished = true;
+  });
+
+  // Referidos de cada promotor que entraron con QR y lo que consumieron, en agregado
+  state.promoters.forEach(p => {
+    const last = PROMOTER_HISTORY[p.id]?.at(-1);
+    if (last && !p.fridayBase) {
+      p.fridayBase = { attended: Math.round(last.attended * 0.48), spend: Math.round(last.spend * 0.47) };
+    }
   });
 
   // 3. Algunos ingresos con nombre propio para la actividad reciente
@@ -410,7 +503,17 @@ export function simulateFriday() {
   ].forEach(([mid, eid, by]) => {
     const member = state.members.find(m => m.id === mid);
     if (member && !member.checkins.some(c => c.eventId === eid)) {
-      member.checkins.push({ eventId: eid, date: '2026-10-16', time: '23:40', validatedBy: by });
+      member.checkins.push({ eventId: eid, date: '2026-10-16', time: '23:40', validatedBy: by, method: 'qr' });
+      // Su boleta de esa noche, si autorizó los puntos (ya incluida en el agregado del evento)
+      if (member.consent.loyalty && !member.purchases.some(p => p.eventId === eid)) {
+        const venueId = state.events.find(e => e.id === eid)?.venueId;
+        const amount = Math.round(AVG_TICKET[venueId] * (1 + (Number(mid.slice(-2)) % 5) / 10));
+        state.receiptSeq += 1;
+        member.purchases.push({
+          receipt: `${RECEIPT_SERIES[venueId]}-${String(state.receiptSeq).padStart(6, '0')}`,
+          venueId, eventId: eid, date: '2026-10-16', amount, points: amount,
+        });
+      }
     }
   });
 

@@ -1213,7 +1213,6 @@ h3, h4 {
 .pr-sim__fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
 .pr-sim__fields .form-group { margin-bottom: var(--space-sm); }
 .pr-sim .btn--simulate-signal { width: 100%; justify-content: center; }
-.pr-sim__result .vt-result { margin-top: var(--space-sm); }
 
 .pr-history .form-label { display: block; margin-bottom: var(--space-xs); }
 
@@ -2099,22 +2098,6 @@ body.mode-panel * { scrollbar-color: #C3C9D1 var(--color-bg); }
 .nb-header { align-items: flex-start; }
 .nb-header .vt-kpis small { display: block; font-size: 0.75rem; color: var(--color-text-dim); margin-top: 2px; }
 
-.nb-insight {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  max-width: 72ch;
-  margin: var(--space-sm) 0 0;
-  padding: 10px 14px;
-  border-left: 3px solid #D4A857;
-  background: var(--color-accent-subtle);
-  border-radius: 0 6px 6px 0;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  color: var(--color-text);
-}
-
-.nb-insight .ic { color: var(--color-accent); margin-top: 3px; }
 
 .nb-block { display: flex; flex-direction: column; gap: var(--space-md); }
 .nb-block__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
@@ -2169,12 +2152,6 @@ body.mode-panel * { scrollbar-color: #C3C9D1 var(--color-bg); }
 .nb-status--finished { color: var(--color-text-muted); background: var(--color-surface-hover); }
 
 /* Tendencia */
-.nb-trend { display: flex; align-items: flex-end; gap: var(--space-sm); height: 150px; padding-top: var(--space-xs); }
-.nb-trend__col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; }
-.nb-trend__bar { width: 100%; max-width: 56px; background: #C9CFD6; border-radius: 3px 3px 0 0; }
-.nb-trend__col--last .nb-trend__bar { background: #D4A857; }
-.nb-trend__val { font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.nb-trend__label { font-size: 0.75rem; color: var(--color-text-dim); white-space: nowrap; }
 
 /* Origen apilado */
 .nb-source { display: flex; flex-direction: column; gap: var(--space-xs); flex: 1; min-width: 0; }
@@ -2248,11 +2225,8 @@ body.mode-panel * { scrollbar-color: #C3C9D1 var(--color-bg); }
 .nb-promoters { display: grid; grid-template-columns: 1fr; gap: var(--space-lg); }
 @media (min-width: 1100px) { .nb-promoters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pr-card__meta { flex-wrap: wrap; line-height: 1.4; }
-.pr-card__trend .nb-trend { height: 96px; }
-.pr-card__trend .form-label { display: block; margin-bottom: 4px; }
 .pr-link--compact { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: 8px 12px; background: var(--color-bg); border-radius: 6px; }
 .pr-link--compact code { font-size: 0.8125rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pr-card__sim { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 
 /* Botón de simulación: igual en todas las pantallas */
 .sim-btn {
@@ -2411,23 +2385,6 @@ body.mode-panel .door-app .form-select option { background: #1A1815; color: #FAF
 .nb-icon-btn:hover { color: var(--color-text); background: var(--color-surface-hover); }
 .nb-icon-btn--danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
 
-.nb-rec {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  border-color: var(--color-border-accent);
-  background: linear-gradient(0deg, var(--color-accent-subtle), var(--color-accent-subtle)), var(--color-surface);
-}
-.nb-rec__body { flex: 1 1 520px; min-width: 0; }
-.nb-rec__body .section-title__eyebrow { display: inline-flex; align-items: center; gap: 6px; }
-.nb-rec__body .vt-panel__title { margin: 4px 0 6px; }
-.nb-rec__reason { margin: 0 0 var(--space-md); font-size: var(--font-size-sm); color: var(--color-text-muted); max-width: 70ch; }
-.nb-rec__facts { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-xl); margin: 0; }
-.nb-rec__facts dt { font-size: 0.75rem; color: var(--color-text-dim); }
-.nb-rec__facts dd { margin: 2px 0 0; font-size: var(--font-size-sm); font-weight: 600; }
-.nb-rec .btn { gap: 8px; }
 
 /* Ventana modal del formulario de evento */
 .modal-backdrop { background-color: rgba(16, 24, 40, 0.45); }
@@ -2453,4 +2410,345 @@ body.mode-panel .door-app .form-select option { background: #1A1815; color: #FAF
 }
 @media (max-width: 860px) {
   .nb-event__actions { grid-column: 2; grid-row: 1; align-self: start; }
+}
+
+/* ==========================================================================
+   26. QR EN PUERTA, PUNTOS Y CONSUMO CONECTADO A CAJA
+   ========================================================================== */
+
+/* — Pase QR (público) — */
+.pass-card__qr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  justify-self: start;
+  width: fit-content;
+  padding: 10px;
+  background: #FAF3E8;
+  border-radius: 10px;
+  margin-bottom: var(--space-md);
+}
+.pass-card__qr .qr { display: block; }
+.pass-card__qr--locked {
+  gap: 8px;
+  width: 168px;
+  height: 168px;
+  padding: var(--space-md);
+  background: transparent;
+  border: 1px dashed var(--color-border-hover);
+  color: var(--color-text-dim);
+  text-align: center;
+  font-size: var(--font-size-xs);
+}
+.pass-card__qr--used .qr { opacity: 0.18; }
+.pass-card__stamp {
+  position: absolute;
+  inset: auto 8px 50% 8px;
+  transform: translateY(50%) rotate(-6deg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 2px solid #3F8F5A;
+  border-radius: 6px;
+  background: rgba(250, 243, 232, 0.92);
+  color: #2F6E44;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+/* — Mi Club: puntos — */
+.points-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-lg) var(--space-2xl);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-accent);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-subtle);
+  margin-bottom: var(--space-md);
+}
+.points-card--off { justify-content: space-between; border-color: var(--color-border); background: var(--color-surface); }
+.points-card--off p { margin: 4px 0 0; max-width: 56ch; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.points-card__title { margin: 0; font-size: 1.125rem; font-weight: 600; }
+.points-card__balance { display: flex; align-items: baseline; gap: 8px; }
+.points-card__value { font-family: var(--font-serif); font-size: 3.5rem; line-height: 0.9; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.points-card__unit { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.points-card__next { flex: 1 1 260px; display: flex; flex-direction: column; gap: 8px; font-size: var(--font-size-sm); }
+.points-card__next small { color: var(--color-text-dim); font-size: 0.75rem; }
+.points-card__track { display: block; height: 6px; border-radius: 999px; background: var(--color-border); overflow: hidden; }
+.points-card__track span { display: block; height: 100%; background: var(--color-accent); border-radius: inherit; }
+
+.redeem-ticket {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 1px dashed var(--color-success-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-success-bg);
+}
+.redeem-ticket .qr { flex: none; border-radius: 6px; }
+.redeem-ticket div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.redeem-ticket__label { font-size: 0.75rem; color: var(--color-success); font-weight: 600; }
+.redeem-ticket code { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+.rewards-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border-subtle); }
+.rewards-list__item { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border-subtle); }
+.rewards-list__pts { flex: none; width: 64px; font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text-dim); font-variant-numeric: tabular-nums; }
+.rewards-list__item.is-available .rewards-list__pts { color: var(--color-accent); }
+.rewards-list__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rewards-list__body strong { font-weight: 500; font-size: var(--font-size-sm); }
+.rewards-list__body small { font-size: 0.75rem; color: var(--color-text-dim); }
+.points-block__off { margin-top: var(--space-sm); padding: 0; border: 0; background: none; color: var(--color-text-dim); font: 400 0.75rem var(--font-body); text-decoration: underline; cursor: pointer; }
+.activity-list__item--purchase .activity-list__icon { color: var(--color-accent); border-color: var(--color-border-accent); }
+
+/* — Puerta: escanear QR (dentro del teléfono, siempre oscuro) — */
+.door-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; margin-top: 6px; background: #1A1815; border-radius: 10px; }
+.door-modes__opt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: #ADA394; font: 500 0.8125rem var(--font-body); cursor: pointer; }
+.door-modes__opt.is-active { background: #2B2723; color: #FAF3E8; }
+
+.door-scan { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 6px 0 2px; }
+.door-scan__view {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1.25;
+  border-radius: 16px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 45%, #26221D, #0F0D0B 70%);
+}
+.door-scan__view .qr { border-radius: 6px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); transform: rotate(-4deg); }
+.door-scan__line {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  height: 2px;
+  background: #D4A857;
+  box-shadow: 0 0 12px rgba(212, 168, 87, 0.8);
+  animation: door-scan-sweep 2.4s ease-in-out infinite;
+}
+@keyframes door-scan-sweep { 0%, 100% { top: 18%; } 50% { top: 80%; } }
+@media (prefers-reduced-motion: reduce) { .door-scan__line { animation: none; top: 50%; } }
+.door-scan__corner { position: absolute; width: 22px; height: 22px; border: 3px solid #D4A857; }
+.door-scan__corner--tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; }
+.door-scan__corner--tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-radius: 0 6px 0 0; }
+.door-scan__corner--bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-radius: 0 0 0 6px; }
+.door-scan__corner--br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 6px 0; }
+.door-scan__empty { color: #8A8174; font-size: 0.8125rem; }
+.door-scan__hint { margin: 0; font-size: 0.75rem; color: #8A8174; text-align: center; }
+.door-app__again { align-self: center; padding: 4px; border: 0; background: none; color: #D4A857; font: 500 0.8125rem var(--font-body); cursor: pointer; text-decoration: underline; }
+
+.door-verdict { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px; border-radius: 12px; text-align: center; animation: fadeIn 0.2s ease; }
+.door-verdict strong { font-size: 1.125rem; }
+.door-verdict span { color: #FAF3E8; font-size: 0.9375rem; }
+.door-verdict small { color: #ADA394; font-size: 0.75rem; }
+.door-verdict--ok { background: rgba(107, 191, 132, 0.14); color: #6BBF84; }
+.door-verdict--dup { background: rgba(212, 168, 87, 0.12); color: #E8BE6A; }
+.door-verdict--bad { background: rgba(224, 108, 96, 0.14); color: #E58A7F; }
+
+/* — Negocio: promotores — */
+.pm-rank { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 8px; border-radius: 50%; background: var(--color-surface-hover); font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); }
+.nb-table tr.is-selected td { background: var(--color-surface-hover); }
+.nb-table tr.is-selected td:first-child { box-shadow: inset 3px 0 0 #D4A857; }
+.pm-detail { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--space-xl); }
+.pm-detail__main, .pm-detail__side { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+@media (max-width: 960px) { .pm-detail { grid-template-columns: 1fr; } }
+
+/* — Negocio: clientes (caja en solo lectura) — */
+.cl-pos__badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--color-success-bg); border: 1px solid var(--color-success-border); color: var(--color-success); font-size: 0.8125rem; font-weight: 600; }
+.cl-pos__now { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.cl-pos__now strong { color: var(--color-text); font-weight: 600; }
+
+.cl-rewards { list-style: none; margin: 0; padding: 0; }
+.cl-rewards li { display: flex; align-items: center; gap: var(--space-md); padding: 10px 0; border-bottom: 1px solid var(--color-border-subtle); }
+.cl-rewards li:last-child { border-bottom: 0; }
+.cl-rewards li > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: var(--font-size-sm); }
+.cl-rewards small { font-size: 0.75rem; color: var(--color-text-dim); }
+.cl-rewards__pts { flex: none; width: 64px; font-size: 1.25rem; font-weight: 700; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.cl-rewards__pts small { margin-left: 3px; font-weight: 500; }
+.cl-rewards__count { flex: none; font-size: 0.8125rem; color: var(--color-text-muted); }
+
+/* ==========================================================================
+   27. NEGOCIO SOBRIO: rótulos en tipografía normal, sin mayúsculas espaciadas
+   ========================================================================== */
+body.mode-panel .section-title__eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+body.mode-panel .nb-header .panel-page__title { margin: 0; }
+
+/* ==========================================================================
+   28. NEGOCIO COMO PRODUCTO: menú Simular, barra móvil, acento contenido
+   ========================================================================== */
+
+/* — Menú "Simular" de la cabecera (solo negocio) — */
+.sim-menu { position: relative; }
+.sim-menu[hidden] { display: none; }
+.app-header__sim {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px dashed var(--color-border-hover);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 500 0.8125rem var(--font-body);
+  cursor: pointer;
+}
+.app-header__sim .ic { color: #B8862B; }
+.app-header__sim:hover, .app-header__sim[aria-expanded="true"] { color: var(--color-text); border-color: #B8862B; }
+.sim-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: var(--z-modal);
+  width: min(340px, calc(100vw - 32px));
+  padding: var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.16);
+}
+.sim-menu__head { margin: 4px 8px 8px; font-size: 0.75rem; color: var(--color-text-dim); }
+.sim-menu__group { padding: 4px 0; border-top: 1px solid var(--color-border-subtle); }
+.sim-menu__label { display: block; margin: 6px 8px 2px; font-size: 0.6875rem; font-weight: 600; color: var(--color-text-dim); }
+.sim-menu__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text);
+  font: 500 0.875rem var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.sim-menu__item small { font-weight: 400; font-size: 0.75rem; color: var(--color-text-dim); }
+.sim-menu__item:hover:not(:disabled) { background: var(--color-surface-hover); }
+.sim-menu__item:disabled { opacity: 0.45; cursor: not-allowed; }
+.sim-menu__result { margin: 6px 4px 2px; padding: 8px 10px; border-radius: 6px; font-size: 0.8125rem; line-height: 1.45; }
+.sim-menu__result--ok { background: var(--color-success-bg); color: var(--color-text); }
+.sim-menu__result--blocked { background: var(--color-surface-hover); color: var(--color-text); }
+.sim-menu__result--error { background: var(--color-danger-bg); color: var(--color-text); }
+@media (max-width: 720px) {
+  .app-header__sim span { display: none; }
+  .app-header__sim { padding: 0 9px; }
+}
+
+/* — Acento contenido: el dorado solo en botones y estado activo — */
+body.mode-panel .nb-accent,
+body.mode-panel .nb-kpi__value--accent,
+body.mode-panel .cl-rewards__pts { color: var(--color-text) !important; }
+body.mode-panel .gr-conv__track span { background: #7C8794; }
+body.mode-panel .app-header__subtitle { display: none; }
+
+/* — Estados de evento: texto con color, sin pastilla — */
+.nb-status { padding: 0; border: 0; background: none !important; font-weight: 600; }
+.nb-status::before { display: none; }
+.vt-panel__title .nb-muted { margin-left: 6px; }
+
+/* — Clientes — */
+.cl-pos { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm) var(--space-md); }
+.cl-search { max-width: 360px; }
+.cl-more { align-self: flex-start; }
+.nb-table tr[hidden] { display: none !important; }
+.nb-table__unit { color: var(--color-text-dim); font-size: 0.8125rem; }
+.nb-table__mobile { display: none !important; }
+@media (max-width: 860px) { .nb-table__mobile { display: inline !important; } small.nb-table__mobile { display: block !important; } }
+.cl-modal { width: min(560px, 100%); }
+.cl-modal .nb-modal__head { align-items: flex-start; }
+.cl-modal__meta { margin: 2px 0 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.cl-modal__title { margin: var(--space-lg) 0 var(--space-xs); }
+.cl-modal__list { list-style: none; margin: 0; padding: 0; }
+.cl-modal__list li { display: grid; grid-template-columns: 76px 1fr auto 52px; gap: var(--space-sm); align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border-subtle); font-size: var(--font-size-sm); }
+.cl-modal__list li > span:first-child { color: var(--color-text-muted); }
+.cl-modal__list small { display: block; font-size: 0.75rem; color: var(--color-text-dim); }
+.cl-modal__pts { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* — Móvil: tablas compactas (nombre + cifra principal; detalle al tocar) — */
+@media (max-width: 860px) {
+  .nb-table--compact tr { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm); padding: 10px 14px; }
+  .nb-table--compact td { border: 0 !important; padding: 0 !important; }
+  .nb-table--compact td:not(:first-child):not(.nb-table__primary) { display: none !important; }
+  .nb-table--compact td.nb-table__primary { display: block !important; font-weight: 600; font-size: 1rem !important; }
+  .nb-table--compact td.nb-table__primary::before { content: none; }
+}
+
+/* — Móvil: barra inferior del negocio y selector de local compacto — */
+.panel-tabbar, .panel-more { display: none; }
+@media (max-width: 1023px) {
+  body.mode-panel .panel-sidebar__nav { display: none; }
+  body.mode-panel .panel-sidebar { padding: 8px var(--space-md); }
+  body.mode-panel .ctx-picker { display: flex; align-items: center; gap: 10px; padding: 0; margin: 0; border: 0; }
+  body.mode-panel .ctx-picker__label { margin: 0; font-size: 0.8125rem; }
+  body.mode-panel .ctx-picker__select { flex: 1; max-width: 280px; padding-top: 6px; padding-bottom: 6px; }
+
+  body.mode-panel .panel-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-nav);
+    display: flex;
+    height: 62px;
+    padding: 0 4px env(safe-area-inset-bottom);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+  .panel-tabbar__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    border: 0;
+    background: none;
+    color: var(--color-text-muted);
+    font: 500 0.6875rem var(--font-body);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .panel-tabbar__item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .panel-tabbar__item--active { color: var(--color-text); }
+  .panel-tabbar__item--active .ic { color: #B8862B; }
+
+  body.mode-panel .panel-more:not([hidden]) {
+    position: fixed;
+    right: 8px;
+    bottom: 70px;
+    z-index: var(--z-nav);
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    padding: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16);
+  }
+  .panel-more__item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; color: var(--color-text); text-decoration: none; font-size: 0.9375rem; }
+  .panel-more__item--active { background: var(--color-surface-hover); }
+
+  body.mode-panel .app-main { padding-bottom: 88px; }
+}
+
+/* — Avisos en el negocio: arriba a la derecha, uno solo — */
+body.mode-panel .toast-container { top: calc(var(--header-height) + var(--demo-banner-height) + 12px); bottom: auto; }
+@media (max-width: 1023px) {
+  body.mode-panel .toast-container { top: auto; bottom: 74px; left: var(--space-md); right: var(--space-md); max-width: none; }
 }
